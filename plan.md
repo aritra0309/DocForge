@@ -52,10 +52,10 @@ Set up the repository so every contributor starts from a consistent, well-config
 - `src/docforge/_version.py`
 
 **Definition of done:**
-- [ ] `pip install -e ".[dev]"` works without errors
-- [ ] `make lint` passes on the empty scaffold
-- [ ] `make test` runs (zero tests, zero failures)
-- [ ] CI passes on GitHub
+- [x] `pip install -e ".[dev]"` works without errors
+- [x] `make lint` passes on the empty scaffold
+- [x] `make test` runs (zero tests, zero failures)
+- [x] CI passes on GitHub
 
 ---
 
@@ -83,10 +83,10 @@ Define the Pydantic v2 data models that flow through every pipeline stage. Every
 Also define chunk ID generation logic: `SHA-256(software|version|canonical_url|section_heading|chunk_index)`.
 
 **Definition of done:**
-- [ ] All models instantiate correctly with sample data
-- [ ] All models serialise to and from JSON (`.model_dump()`, `.model_validate()`)
-- [ ] `mypy` passes on `models.py`
-- [ ] Unit tests for ID generation determinism
+- [x] All models instantiate correctly with sample data
+- [x] All models serialise to and from JSON (`.model_dump()`, `.model_validate()`)
+- [x] `mypy` passes on `models.py`
+- [x] Unit tests for ID generation determinism
 
 ---
 
@@ -115,9 +115,9 @@ Each ABC must have:
 - `@abstractmethod` decorators
 
 **Definition of done:**
-- [ ] All ABCs defined with correct signatures
-- [ ] A dummy implementation of each ABC can be instantiated without error
-- [ ] `mypy` passes
+- [x] All ABCs defined with correct signatures
+- [x] A dummy implementation of each ABC can be instantiated without error
+- [x] `mypy` passes
 
 ---
 
