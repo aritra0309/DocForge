@@ -20,7 +20,7 @@ format:
 	ruff format src tests
 
 typecheck:
-	mypy src/docforge
+	mypy src/docforge tests
 
 test:
 	pytest -v || [ $$? -eq 5 ]
