@@ -136,7 +136,7 @@ ignore = []
 preview = true
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "S106", "T201", "T203"]
+"tests/**/*.py" = ["S101", "S106", "T201", "T203", "PLR6301", "PLR2004", "RUF069", "B017"]
 "src/docforge/__main__.py" = ["T201"]
 
 [tool.ruff.lint.isort]
