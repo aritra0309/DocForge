@@ -1,0 +1,19 @@
+name: react
+display_name: React
+documentation:
+  base_url: "https://react.dev/"
+  version_pattern: ~
+  sitemap_url: "https://react.dev/sitemap.xml"
+  versions:
+    strategy: explicit
+    known_versions: ["latest"]
+    latest: "latest"
+  content_selectors:
+    main_content: "article"
+    navigation: "nav"
+  url_filters:
+    include: ["/**"]
+    exclude: ["**/blog/**", "**/community/**"]
+  page_type_hints:
+    tutorial_paths: ["/learn/**"]
+    reference_paths: ["/reference/**"]

@@ -1,0 +1,19 @@
+name: postgresql
+display_name: PostgreSQL
+documentation:
+  base_url: "https://www.postgresql.org/docs/"
+  version_pattern: "https://www.postgresql.org/docs/{version}/"
+  sitemap_url: "https://www.postgresql.org/sitemap.xml"
+  versions:
+    strategy: url_enumeration
+    known_versions: ["17", "16", "15", "14", "13"]
+    latest: "17"
+  content_selectors:
+    main_content: "#docContent"
+    navigation: ".toc"
+  url_filters:
+    include: ["/docs/{version}/**"]
+    exclude: ["**/release-*"]
+  page_type_hints:
+    tutorial_paths: ["/docs/{version}/tutorial/**"]
+    reference_paths: ["/docs/{version}/reference/**"]

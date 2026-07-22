@@ -1,0 +1,19 @@
+name: mongodb
+display_name: MongoDB
+documentation:
+  base_url: "https://www.mongodb.com/docs/"
+  version_pattern: "https://www.mongodb.com/docs/{version}/"
+  sitemap_url: "https://www.mongodb.com/sitemap.xml"
+  versions:
+    strategy: url_enumeration
+    known_versions: ["v7.0", "v6.0", "v5.0", "v4.4"]
+    latest: "v7.0"
+  content_selectors:
+    main_content: "article"
+    navigation: "nav"
+  url_filters:
+    include: ["/docs/{version}/**"]
+    exclude: ["**/whats-new/**", "**/release-notes/**"]
+  page_type_hints:
+    tutorial_paths: ["/docs/{version}/tutorial/**"]
+    reference_paths: ["/docs/{version}/reference/**"]

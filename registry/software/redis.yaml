@@ -1,0 +1,19 @@
+name: redis
+display_name: Redis
+documentation:
+  base_url: "https://redis.io/docs/"
+  version_pattern: "https://redis.io/docs/{version}/"
+  sitemap_url: "https://redis.io/sitemap.xml"
+  versions:
+    strategy: url_enumeration
+    known_versions: ["latest", "7.4", "7.2", "7.0", "6.2"]
+    latest: "latest"
+  content_selectors:
+    main_content: "#main-content"
+    navigation: ".sidebar"
+  url_filters:
+    include: ["/docs/{version}/**"]
+    exclude: ["**/commands/**", "**/glossary/**"]
+  page_type_hints:
+    tutorial_paths: ["/docs/{version}/getting-started/**"]
+    reference_paths: ["/docs/{version}/reference/**"]

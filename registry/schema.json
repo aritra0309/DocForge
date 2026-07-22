@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docforge.example.com/registry/schema.json",
+  "title": "DocForge Registry Entry",
+  "description": "Schema for a single software registry entry stored as YAML.",
+  "type": "object",
+  "required": ["name", "display_name", "documentation"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Canonical software identifier (e.g. 'postgresql')",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Human-readable display name (e.g. 'PostgreSQL')"
+    },
+    "documentation": {
+      "type": "object",
+      "required": ["base_url"],
+      "properties": {
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Root URL of the documentation"
+        },
+        "version_pattern": {
+          "type": ["string", "null"],
+          "description": "URL pattern with {version} placeholder"
+        },
+        "sitemap_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "description": "URL of the XML sitemap"
+        },
+        "versions": {
+          "type": "object",
+          "properties": {
+            "strategy": {
+              "type": "string",
+              "enum": ["url_enumeration", "sitemap", "explicit", "dropdown_scraping"],
+              "description": "Strategy for discovering versions"
+            },
+            "known_versions": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Known documentation versions"
+            },
+            "latest": {
+              "type": "string",
+              "description": "Latest stable version"
+            }
+          }
+        },
+        "content_selectors": {
+          "type": "object",
+          "description": "CSS selectors for content extraction",
+          "properties": {
+            "main_content": {"type": "string"},
+            "navigation": {"type": "string"}
+          },
+          "additionalProperties": {"type": "string"}
+        },
+        "url_filters": {
+          "type": "object",
+          "description": "Include/exclude URL glob patterns",
+          "properties": {
+            "include": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "exclude": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "page_type_hints": {
+          "type": "object",
+          "description": "URL path patterns for page type classification",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

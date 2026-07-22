@@ -173,10 +173,10 @@ path = "~/.docforge/vectordb"
 ```
 
 **Definition of done:**
-- [ ] Config loads from TOML file, env vars, and defaults
-- [ ] Invalid config values raise clear, human-readable errors via Pydantic
-- [ ] `data_dir` is automatically created if it doesn't exist
-- [ ] Unit tests for precedence (env var overrides file, file overrides defaults)
+- [x] Config loads from TOML file, env vars, and defaults
+- [x] Invalid config values raise clear, human-readable errors via Pydantic
+- [x] `data_dir` is automatically created if it doesn't exist
+- [x] Unit tests for precedence (env var overrides file, file overrides defaults)
 
 ---
 
@@ -226,11 +226,11 @@ documentation:
 4. **CI validation** — add a step to the GitHub Actions CI that validates all registry YAMLs against the schema
 
 **Definition of done:**
-- [ ] All 7 YAML files validate against `schema.json`
-- [ ] `registry.lookup("postgresql")` returns the correct entry
-- [ ] `registry.lookup("unknown")` returns `None`
-- [ ] CI validates all registry entries on every PR
-- [ ] Unit tests for registry loading and lookup
+- [x] All 7 YAML files validate against `schema.json`
+- [x] `registry.lookup("postgresql")` returns the correct entry
+- [x] `registry.lookup("unknown")` returns `None`
+- [x] CI validates all registry entries on every PR
+- [x] Unit tests for registry loading and lookup
 
 ---
 

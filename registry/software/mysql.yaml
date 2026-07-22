@@ -1,0 +1,19 @@
+name: mysql
+display_name: MySQL
+documentation:
+  base_url: "https://dev.mysql.com/doc/"
+  version_pattern: "https://dev.mysql.com/doc/refman/{version}/en/"
+  sitemap_url: "https://dev.mysql.com/sitemap.xml"
+  versions:
+    strategy: url_enumeration
+    known_versions: ["8.4", "8.3", "8.2", "8.0", "5.7"]
+    latest: "8.4"
+  content_selectors:
+    main_content: "main"
+    navigation: ".toc"
+  url_filters:
+    include: ["/doc/refman/{version}/en/**"]
+    exclude: ["**/pdf/**", "**/images/**"]
+  page_type_hints:
+    tutorial_paths: ["/doc/refman/{version}/en/tutorial.html"]
+    reference_paths: ["/doc/refman/{version}/en/**"]

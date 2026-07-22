@@ -1,0 +1,19 @@
+name: fastapi
+display_name: FastAPI
+documentation:
+  base_url: "https://fastapi.tiangolo.com/"
+  version_pattern: ~
+  sitemap_url: "https://fastapi.tiangolo.com/sitemap.xml"
+  versions:
+    strategy: sitemap
+    known_versions: ["latest"]
+    latest: "latest"
+  content_selectors:
+    main_content: ".md-content"
+    navigation: ".md-sidebar"
+  url_filters:
+    include: ["/**"]
+    exclude: ["**/blog/**", "**/resources/**", "**/help/**", "**/about/**"]
+  page_type_hints:
+    tutorial_paths: ["/tutorial/**"]
+    reference_paths: ["/reference/**"]

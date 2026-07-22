@@ -53,6 +53,7 @@ dependencies = [
     "structlog>=24.1,<25",
     "orjson>=3.10,<4",
     "xxhash>=3.4,<4",
+    "jsonschema>=4.20,<5",
 ]
 
 [project.optional-dependencies]
