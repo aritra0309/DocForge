@@ -12,12 +12,12 @@ help:
 	@echo "  make clean       - Remove build artifacts"
 
 lint:
-	ruff check src tests
-	ruff format --check src tests
+	ruff check src $(wildcard tests)
+	ruff format --check src $(wildcard tests)
 
 format:
-	ruff check --fix src tests
-	ruff format src tests
+	ruff check --fix src $(wildcard tests)
+	ruff format src $(wildcard tests)
 
 typecheck:
 	mypy src/docforge
