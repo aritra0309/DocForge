@@ -2,10 +2,21 @@
 
 > **Automatically discovers, crawls, versions, chunks, and indexes official software documentation into a RAG-ready knowledge base.**
 
-[![CI](https://github.com/docforge/docforge/actions/workflows/ci.yml/badge.svg)](https://github.com/docforge/docforge/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/docforge.svg)](https://pypi.org/project/docforge/)
-[![Python](https://img.shields.io/pypi/pyversions/docforge.svg)](https://pypi.org/project/docforge/)
-[![License](https://img.shields.io/github/license/docforge/docforge.svg)](https://github.com/docforge/docforge/blob/main/LICENSE)
+[![CI](https://github.com/aritra0309/DocForge/actions/workflows/ci.yml/badge.svg)](https://github.com/aritra0309/DocForge/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
+[![License](https://img.shields.io/github/license/aritra0309/DocForge.svg)](https://github.com/aritra0309/DocForge/blob/main/LICENSE)
+
+## Status
+
+Phase 1 of the [implementation plan](plan.md) is complete — the following are built and tested:
+
+- ✅ **Project scaffold** — pyproject.toml, lint/format/typecheck, CI
+- ✅ **Core data models** — Pydantic v2 models for all pipeline stages
+- ✅ **Plugin interfaces** — ABCs for discovery, crawling, extraction, chunking, embeddings, storage
+- ✅ **Configuration system** — TOML files + env vars + Python overrides, 5-layer priority
+- ✅ **Software registry** — 7 curated entries (PostgreSQL, MySQL, MongoDB, FastAPI, React, Kubernetes, Redis)
+
+Next up: discovery engine, crawling, extraction, and the full indexing pipeline.
 
 ## Quickstart
 
@@ -106,12 +117,12 @@ export DOCFORGE_OPENAI_API_KEY=sk-...
 | Software | Versions |
 |----------|----------|
 | PostgreSQL | 13–17 |
-| MySQL | 8.0, 8.4 |
-| MongoDB | 6.0, 7.0 |
-| FastAPI | 0.109, 0.110 |
-| React | 18, 19 |
-| Kubernetes | 1.28–1.30 |
-| Redis | 7.0, 7.2 |
+| MySQL | 5.7, 8.0–8.4 |
+| MongoDB | 4.4–7.0 |
+| FastAPI | latest |
+| React | latest |
+| Kubernetes | 1.27–1.31 |
+| Redis | 6.2, 7.0–7.4, latest |
 
 Add more via `registry/software/*.yaml`.
 
@@ -142,7 +153,7 @@ Each stage is a pluggable interface — swap in your own crawler, extractor, chu
 
 ```bash
 # Clone and setup
-git clone https://github.com/docforge/docforge
+git clone https://github.com/aritra0309/DocForge
 cd docforge
 make dev-install
 
