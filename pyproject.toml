@@ -95,6 +95,9 @@ weaviate = [
     "weaviate-client>=4.6,<5",
 ]
 
+[project.scripts]
+docforge = "docforge.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/docforge/docforge"
 Repository = "https://github.com/docforge/docforge"
