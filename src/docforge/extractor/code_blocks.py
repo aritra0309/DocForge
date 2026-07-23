@@ -17,11 +17,11 @@ LINE_NUMBER_SELECTORS: tuple[str, ...] = (
 )
 
 CONTEXT_LANGUAGE_HINTS: tuple[tuple[str, str], ...] = (
-    (r"\bSELECT\b|\bINSERT\b|\bCREATE TABLE\b", "sql"),
+    (r"\bSELECT\b|\bINSERT\b|\bCREATE TABLE\b|\bCREATE INDEX\b", "sql"),
     (r"\bdef \w+\(", "python"),
     (r"\bfunction\b|\bconst\b|\bimport\b", "javascript"),
     (r"\bpackage main\b|\bfunc \w+\(", "go"),
-    (r"\bcurl\b|\bwget\b", "bash"),
+    (r"\bcurl\b|\bwget\b|\bpip install\b|\bnpm install\b", "bash"),
     (r"\bkubectl\b|\bdocker\b", "bash"),
 )
 
@@ -114,4 +114,13 @@ def post_process_markdown_code_blocks(markdown: str) -> str:
         else:
             output.append(line)
 
-    return "\n".join(output)
+    processed = "\n".join(output)
+
+    def replace_text_fence(match: re.Match[str]) -> str:
+        content = match.group(1)
+        detected = detect_language_from_context(content)
+        if detected:
+            return f"```{detected}\n{content}```"
+        return match.group(0)
+
+    return re.sub(r"```text\n(.*?)```", replace_text_fence, processed, flags=re.DOTALL)

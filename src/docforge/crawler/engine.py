@@ -37,6 +37,7 @@ class CrawlEngine:
             self.parallelism = 8
 
         self.fetcher = fetcher or HTTPFetcher(config=self.crawler_config)
+        self._owns_cache = cache is None
         self.cache = cache or ResponseCache()
         self.robots_enforcer = robots_enforcer or RobotsPolicyEnforcer(
             fetcher=self.fetcher,
@@ -295,4 +296,5 @@ class CrawlEngine:
     def close(self) -> None:
         """Close SQLite database connections."""
         self._conn.close()
-        self.cache.close()
+        if self._owns_cache:
+            self.cache.close()
