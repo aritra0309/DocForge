@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CREATE INDEX - PostgreSQL 17 Documentation</title>
+  <meta name="description" content="CREATE INDEX command reference">
+  <meta property="og:title" content="CREATE INDEX">
+</head>
+<body>
+  <nav class="toc">
+    <a href="/docs/17/index.html">Home</a>
+    <a href="/docs/17/sql.html">SQL Commands</a>
+  </nav>
+  <header><a href="/">PostgreSQL Global Development Group</a></header>
+  <div id="docContent">
+    <h1>CREATE INDEX</h1>
+    <p>CREATE INDEX constructs an index on the specified column(s) of a table.</p>
+    <div class="note">
+      <p class="admonition-title">Note</p>
+      <p>Indexes can significantly improve query performance.</p>
+    </div>
+    <h2>Syntax</h2>
+    <pre><code class="language-sql">CREATE INDEX index_name ON table_name (column_name);</code></pre>
+    <h2>Parameters</h2>
+    <table>
+      <tr><th>Parameter</th><th>Description</th></tr>
+      <tr><td>index_name</td><td>Name of the index to create</td></tr>
+      <tr><td>table_name</td><td>Name of the table</td></tr>
+    </table>
+    <p>See also <a href="drop-index.html">DROP INDEX</a>.</p>
+  </div>
+  <footer>Copyright &copy; PostgreSQL Global Development Group</footer>
+</body>
+</html>
