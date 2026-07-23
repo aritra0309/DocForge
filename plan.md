@@ -264,12 +264,12 @@ Implement `DocForge`'s ability to find a software's documentation URL and enumer
 ```
 
 **Definition of done:**
-- [ ] `discovery.discover("postgresql")` returns correct `DiscoveryResult` (from registry)
-- [ ] `discovery.discover("fastapi")` returns correct result
-- [ ] Sitemap parser handles both flat sitemaps and sitemap indexes
-- [ ] Version detector enumerates all known versions for PostgreSQL
-- [ ] Unit tests with mocked HTTP responses
-- [ ] `DiscoveryError` raised with clear message when software cannot be found
+- [x] `discovery.discover("postgresql")` returns correct `DiscoveryResult` (from registry)
+- [x] `discovery.discover("fastapi")` returns correct result
+- [x] Sitemap parser handles both flat sitemaps and sitemap indexes
+- [x] Version detector enumerates all known versions for PostgreSQL
+- [x] Unit tests with mocked HTTP responses
+- [x] `DiscoveryError` raised with clear message when software cannot be found
 
 ---
 

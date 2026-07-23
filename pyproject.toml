@@ -137,11 +137,11 @@ select = [
     "TRY", # tryceratops
     "RUF", # ruff-specific
 ]
-ignore = []
+ignore = ["PLR0913"]
 preview = true
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "S106", "T201", "T203", "PLR6301", "PLR2004", "RUF069", "B017"]
+"tests/**/*.py" = ["S101", "S106", "T201", "T203", "PLR6301", "PLR2004", "RUF069", "B017", "PLC2701", "PLC0415"]
 "src/docforge/__main__.py" = ["T201"]
 
 [tool.ruff.lint.isort]
