@@ -101,6 +101,7 @@ def _code_language_callback(el: lxml_html.HtmlElement) -> str | None:
 
 def _ensure_absolute_links(markdown: str, base_url: str) -> str:
     """Post-process markdown links to ensure relative URLs are absolute."""
+
     def replacer(match: re.Match[str]) -> str:
         text = match.group(1)
         url = match.group(2)

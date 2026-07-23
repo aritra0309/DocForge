@@ -99,11 +99,7 @@ def glob_to_regex(pattern: str) -> re.Pattern[str]:
     # \*\* -> .*
     # \* -> [^/]*
     # \? -> [^/]
-    regex_str = (
-        escaped.replace(r"\*\*", ".*")
-        .replace(r"\*", r"[^/]*")
-        .replace(r"\?", r"[^/]")
-    )
+    regex_str = escaped.replace(r"\*\*", ".*").replace(r"\*", r"[^/]*").replace(r"\?", r"[^/]")
 
     if not regex_str.startswith("^"):
         regex_str = f"^{regex_str}"

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import httpx
 import pytest
 import respx
 
@@ -31,7 +30,9 @@ async def test_crawl_fixture_site(tmp_path: Path) -> None:
     respx.get(f"{BASE}/docs/index.html").respond(status_code=200, text=index_html)
     respx.get(f"{BASE}/docs/page1.html").respond(status_code=200, text=page1_html)
     respx.get(f"{BASE}/docs/page2.html").respond(status_code=200, text=page2_html)
-    respx.get(f"{BASE}/docs/private/secret.html").respond(status_code=200, text="<html>secret</html>")
+    respx.get(f"{BASE}/docs/private/secret.html").respond(
+        status_code=200, text="<html>secret</html>"
+    )
 
     config = CrawlerConfig(max_pages_per_version=10, rate_limit_rps=100)
     cache = ResponseCache(db_path=tmp_path / "cache.db")

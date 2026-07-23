@@ -6,7 +6,6 @@ import asyncio
 import random
 import time
 from datetime import UTC, datetime
-from typing import Any
 
 import httpx
 
@@ -142,7 +141,7 @@ class HTTPFetcher(CrawlFetcher):
             except (httpx.HTTPError, httpx.StreamError) as e:
                 last_exception = e
                 if attempt < max_attempts - 1:
-                    backoff = (2**attempt) * 0.5 + random.uniform(0, 0.1)  # noqa: S311
+                    backoff = (2**attempt) * 0.5 + random.uniform(0, 0.1)
                     await asyncio.sleep(backoff)
 
         msg = f"Failed to fetch '{url}' after {max_attempts} attempt(s): {last_exception}"

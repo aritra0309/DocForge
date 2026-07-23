@@ -6,11 +6,11 @@ import time
 from pathlib import Path
 
 import pytest
+from lxml import html as lxml_html
 
 from docforge.core.models import FetchResult
 from docforge.extractor.engine import ExtractionEngine
 from docforge.extractor.tables import flatten_table, is_renderable_gfm_table
-from lxml import html as lxml_html
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
 

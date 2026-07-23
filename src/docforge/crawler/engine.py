@@ -112,9 +112,7 @@ class CrawlEngine:
         """Update URL status in queue."""
         async with self._queue_lock:
             with self._conn:
-                self._conn.execute(
-                    "UPDATE crawl_queue SET status = ? WHERE url = ?", (status, url)
-                )
+                self._conn.execute("UPDATE crawl_queue SET status = ? WHERE url = ?", (status, url))
 
     async def get_queue_stats(self) -> dict[str, int]:
         """Return counts of URLs by status."""
@@ -169,12 +167,8 @@ class CrawlEngine:
             self.clear_queue()
 
         base_url = discovery_result.base_url if discovery_result else seeds[0]
-        include_patterns = (
-            discovery_result.url_filters.get("include") if discovery_result else None
-        )
-        exclude_patterns = (
-            discovery_result.url_filters.get("exclude") if discovery_result else None
-        )
+        include_patterns = discovery_result.url_filters.get("include") if discovery_result else None
+        exclude_patterns = discovery_result.url_filters.get("exclude") if discovery_result else None
 
         url_filter = URLFilter(
             base_url=base_url,

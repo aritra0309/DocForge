@@ -5,8 +5,6 @@ from __future__ import annotations
 import asyncio
 from urllib.parse import urlparse
 
-import httpx
-
 from docforge.core.interfaces import CrawlFetcher
 from docforge.discovery.robots import RobotsPolicy, fetch_robots_txt
 
@@ -35,7 +33,8 @@ class RobotsPolicyEnforcer:
 
             base_url = f"{parsed.scheme}://{netloc}/"
             try:
-                # If fetcher has an underlying client, pass it, otherwise let fetch_robots_txt handle it
+                # If fetcher has an underlying client, pass it; otherwise let
+                # fetch_robots_txt handle it.
                 policy = await fetch_robots_txt(base_url)
             except Exception:
                 # On error, default to empty policy (allow all)
