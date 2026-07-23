@@ -50,10 +50,12 @@ def _convert_callout_divs(element: lxml_html.HtmlElement) -> None:
     for callout in element.cssselect("div.docforge-callout"):
         callout_type = callout.get("data-callout-type", "Note")
         body = callout.text_content().strip()
-        if body.startswith(f"**{callout_type}:**"):
-            body = body[len(f"**{callout_type}:**") :].strip()
+        body = re.sub(rf"^\*{{0,2}}{re.escape(callout_type)}:\*{{0,2}}\s*", "", body)
         replacement = lxml_html.Element("blockquote")
-        replacement.text = f"**{callout_type}:** {body}"
+        strong = lxml_html.Element("strong")
+        strong.text = f"{callout_type}:"
+        strong.tail = f" {body}" if body else ""
+        replacement.append(strong)
         parent = callout.getparent()
         if parent is not None:
             parent.replace(callout, replacement)
@@ -94,13 +96,38 @@ def html_to_markdown(content: lxml_html.HtmlElement, base_url: str) -> str:
 
 
 def _code_language_callback(el: lxml_html.HtmlElement) -> str | None:
-    if el.tag == "code":
-        return detect_language_from_class(el.get("class"))
+    tag = getattr(el, "tag", None) or getattr(el, "name", None)
+
+    class_attr = None
+    if hasattr(el, "get"):
+        raw_class = el.get("class")
+        if isinstance(raw_class, list):
+            class_attr = " ".join(raw_class)
+        elif raw_class is not None:
+            class_attr = str(raw_class)
+
+    if tag == "code":
+        return detect_language_from_class(class_attr)
+    if tag == "pre":
+        language = detect_language_from_class(class_attr)
+        if language:
+            return language
+        code_el = None
+        if hasattr(el, "find"):
+            code_el = el.find("code")
+            if code_el is None:
+                code_el = el.find(".//code")
+        if code_el is not None:
+            code_class = code_el.get("class") if hasattr(code_el, "get") else None
+            if isinstance(code_class, list):
+                code_class = " ".join(code_class)
+            return detect_language_from_class(str(code_class) if code_class is not None else None)
     return None
 
 
 def _ensure_absolute_links(markdown: str, base_url: str) -> str:
     """Post-process markdown links to ensure relative URLs are absolute."""
+
     def replacer(match: re.Match[str]) -> str:
         text = match.group(1)
         url = match.group(2)

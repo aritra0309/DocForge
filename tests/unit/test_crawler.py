@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime, timedelta
-import respx
-import httpx
+
 import pytest
+import respx
 
 from docforge.core.config import CrawlerConfig
 from docforge.core.models import DiscoveryResult, FetchResult
@@ -15,7 +15,6 @@ from docforge.crawler.engine import CrawlEngine
 from docforge.crawler.fetcher import FetchError, HTTPFetcher, TokenBucket
 from docforge.crawler.filters import URLFilter, glob_to_regex, normalize_url
 from docforge.crawler.robots_policy import RobotsPolicyEnforcer
-
 
 # ---------------------------------------------------------------------------
 # URL Normalisation and Filtering Tests
@@ -265,9 +264,15 @@ async def test_crawl_engine_end_to_end() -> None:
     page_tutorial = "<html><body><h1>Tutorial</h1></body></html>"
 
     respx.get("https://www.postgresql.org/robots.txt").respond(status_code=404)
-    respx.get("https://www.postgresql.org/docs/17/index.html").respond(status_code=200, text=page_root)
-    respx.get("https://www.postgresql.org/docs/17/intro.html").respond(status_code=200, text=page_intro)
-    respx.get("https://www.postgresql.org/docs/17/tutorial.html").respond(status_code=200, text=page_tutorial)
+    respx.get("https://www.postgresql.org/docs/17/index.html").respond(
+        status_code=200, text=page_root
+    )
+    respx.get("https://www.postgresql.org/docs/17/intro.html").respond(
+        status_code=200, text=page_intro
+    )
+    respx.get("https://www.postgresql.org/docs/17/tutorial.html").respond(
+        status_code=200, text=page_tutorial
+    )
 
     config = CrawlerConfig(max_pages_per_version=10, rate_limit_rps=100)
     cache = ResponseCache()
@@ -282,7 +287,9 @@ async def test_crawl_engine_end_to_end() -> None:
         url_filters={"include": ["/docs/17/**"]},
     )
 
-    results = await engine.crawl("https://www.postgresql.org/docs/17/index.html", discovery_result=discovery)
+    results = await engine.crawl(
+        "https://www.postgresql.org/docs/17/index.html", discovery_result=discovery
+    )
 
     urls = {r.url for r in results}
     assert "https://www.postgresql.org/docs/17/index.html" in urls
@@ -292,7 +299,9 @@ async def test_crawl_engine_end_to_end() -> None:
 
     # Second crawl run should hit cache
     engine_cached = CrawlEngine(config=config, cache=cache)
-    cached_results = await engine_cached.crawl("https://www.postgresql.org/docs/17/index.html", discovery_result=discovery)
+    cached_results = await engine_cached.crawl(
+        "https://www.postgresql.org/docs/17/index.html", discovery_result=discovery
+    )
     assert len(cached_results) == len(results)
 
     engine.close()

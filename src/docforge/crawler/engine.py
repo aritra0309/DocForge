@@ -37,6 +37,7 @@ class CrawlEngine:
             self.parallelism = 8
 
         self.fetcher = fetcher or HTTPFetcher(config=self.crawler_config)
+        self._owns_cache = cache is None
         self.cache = cache or ResponseCache()
         self.robots_enforcer = robots_enforcer or RobotsPolicyEnforcer(
             fetcher=self.fetcher,
@@ -112,9 +113,7 @@ class CrawlEngine:
         """Update URL status in queue."""
         async with self._queue_lock:
             with self._conn:
-                self._conn.execute(
-                    "UPDATE crawl_queue SET status = ? WHERE url = ?", (status, url)
-                )
+                self._conn.execute("UPDATE crawl_queue SET status = ? WHERE url = ?", (status, url))
 
     async def get_queue_stats(self) -> dict[str, int]:
         """Return counts of URLs by status."""
@@ -169,12 +168,8 @@ class CrawlEngine:
             self.clear_queue()
 
         base_url = discovery_result.base_url if discovery_result else seeds[0]
-        include_patterns = (
-            discovery_result.url_filters.get("include") if discovery_result else None
-        )
-        exclude_patterns = (
-            discovery_result.url_filters.get("exclude") if discovery_result else None
-        )
+        include_patterns = discovery_result.url_filters.get("include") if discovery_result else None
+        exclude_patterns = discovery_result.url_filters.get("exclude") if discovery_result else None
 
         url_filter = URLFilter(
             base_url=base_url,
@@ -301,4 +296,5 @@ class CrawlEngine:
     def close(self) -> None:
         """Close SQLite database connections."""
         self._conn.close()
-        self.cache.close()
+        if self._owns_cache:
+            self.cache.close()
