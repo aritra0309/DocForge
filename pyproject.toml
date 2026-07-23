@@ -175,12 +175,6 @@ exclude = [
     "dist",
     "tests/fixtures",
 ]
-[[tool.mypy.overrides]]
-module = [
-    "tests.*",
-]
-disallow_untyped_defs = false
-check_untyped_defs = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

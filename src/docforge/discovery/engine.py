@@ -117,10 +117,11 @@ class DiscoveryEngine:
         """
         name = _extract_name_from_url(url)
 
-        created_client = self._client is None
-        if created_client:
+        if self._client is None:
+            created_client = True
             client = httpx.AsyncClient(timeout=self._timeout, follow_redirects=True)
         else:
+            created_client = False
             client = self._client
 
         try:
@@ -189,10 +190,11 @@ class DiscoveryEngine:
         self, name: str, candidate: HeuristicCandidate
     ) -> DiscoveryResult:
         """Build a DiscoveryResult from a heuristic candidate."""
-        created_client = self._client is None
-        if created_client:
+        if self._client is None:
+            created_client = True
             client = httpx.AsyncClient(timeout=self._timeout)
         else:
+            created_client = False
             client = self._client
         try:
             versions = await _detect_versions_from_page(candidate.url, client)

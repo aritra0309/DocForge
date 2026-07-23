@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 import pytest
@@ -80,7 +81,7 @@ class DummyChunker(ChunkingStrategy):
             total_chunks=1,
             has_code=False,
             content_hash="c" * 64,
-            crawl_timestamp="2026-01-01T00:00:00Z",
+            crawl_timestamp=datetime.fromisoformat("2026-01-01T00:00:00Z"),
             embedding_model="test",
             embedding_dimension=8,
             docforge_version="0.1.0-dev",
