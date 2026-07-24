@@ -156,7 +156,8 @@ class TestRuleBasedScorer:
             url="https://example.com/examples",
             title="Examples",
             markdown=(
-                "# Examples\n\n```python\nprint('hello')\n```\n\n```javascript\nconsole.log('hi')\n```"
+                "# Examples\n\n```python\nprint('hello')\n```\n\n"
+                "```javascript\nconsole.log('hi')\n```"
             ),
             headings=["Examples"],
             code_blocks=[
