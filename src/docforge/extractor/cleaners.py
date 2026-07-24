@@ -165,19 +165,18 @@ def extract_page_title(doc: lxml_html.HtmlElement, html_text: str) -> str:
 
     try:
         full_doc = lxml_html.fromstring(html_text)
-        title_el = full_doc.find(".//title")
-        if title_el is not None:
-            title_text = title_el.text_content().strip()
-            if title_text:
-                # Strip common "Page Title - Site Name" patterns
-                for sep in (" — ", " | ", " - "):
-                    if sep in title_text:
-                        title_text = title_text.split(sep)[0].strip()
-                        break
-                return re.sub(r"\s+", " ", title_text)
     except Exception:
-        pass
+        return "Untitled"
 
+    title_el = full_doc.find(".//title")
+    if title_el is not None:
+        title_text = title_el.text_content().strip()
+        if title_text:
+            for sep in (" — ", " | ", " - "):
+                if sep in title_text:
+                    title_text = title_text.split(sep)[0].strip()
+                    break
+            return re.sub(r"\s+", " ", title_text)
     return "Untitled"
 
 

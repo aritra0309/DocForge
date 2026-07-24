@@ -217,29 +217,24 @@ class CrawlEngine:
                     url, depth = item
 
                     async with sem:
-                        try:
+                        async with count_lock:
+                            if fetched_count >= limit:
+                                await self.mark_status(url, "pending")
+                                break
+
+                        result = await self._try_process_url(url, url_filter, depth)
+                        if result is None:
+                            continue
+
+                        if result.url not in fetched_urls:
                             async with count_lock:
-                                if fetched_count >= limit:
-                                    await self.mark_status(url, "pending")
-                                    break
-
-                            result = await self._process_url(
-                                url=url,
-                                url_filter=url_filter,
-                                depth=depth,
-                            )
-
-                            if result is not None and result.url not in fetched_urls:
-                                async with count_lock:
-                                    if fetched_count < limit:
-                                        fetched_urls.add(result.url)
-                                        fetched_results.append(result)
-                                        fetched_count += 1
-                                await self.mark_status(url, "completed")
-                            else:
-                                await self.mark_status(url, "completed")
-                        except Exception:
-                            await self.mark_status(url, "failed")
+                                if fetched_count < limit:
+                                    fetched_urls.add(result.url)
+                                    fetched_results.append(result)
+                                    fetched_count += 1
+                            await self.mark_status(url, "completed")
+                        else:
+                            await self.mark_status(url, "completed")
             finally:
                 async with active_lock:
                     active_workers -= 1
@@ -292,6 +287,18 @@ class CrawlEngine:
                 await self.enqueue(link, depth=depth + 1)
 
         return result
+
+    async def _try_process_url(
+        self,
+        url: str,
+        url_filter: URLFilter,
+        depth: int,
+    ) -> FetchResult | None:
+        try:
+            return await self._process_url(url=url, url_filter=url_filter, depth=depth)
+        except Exception:
+            await self.mark_status(url, "failed")
+            return None
 
     def close(self) -> None:
         """Close SQLite database connections."""
