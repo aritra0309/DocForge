@@ -195,6 +195,7 @@ addopts = "-ra -q --strict-markers --strict-config"
 markers = [
     "unit: Unit tests (no network, all mocked)",
     "integration: Integration tests (may use network or external services)",
+    "real_network: Tests that hit live external websites",
     "benchmark: Performance benchmarks",
     "slow: Tests that take >5 seconds",
 ]

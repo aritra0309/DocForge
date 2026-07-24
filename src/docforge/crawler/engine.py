@@ -6,6 +6,7 @@ import asyncio
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 from docforge.core.config import CrawlerConfig, DocForgeConfig
 from docforge.core.models import DiscoveryResult, FetchResult
@@ -168,8 +169,27 @@ class CrawlEngine:
             self.clear_queue()
 
         base_url = discovery_result.base_url if discovery_result else seeds[0]
-        include_patterns = discovery_result.url_filters.get("include") if discovery_result else None
-        exclude_patterns = discovery_result.url_filters.get("exclude") if discovery_result else None
+
+        # Extract version from seed URL by removing base_url prefix
+        version = ""
+        if discovery_result:
+            base_stripped = base_url.rstrip("/")
+            for seed in seeds:
+                rest = seed.replace(base_stripped, "").strip("/")
+                if rest and "/" not in rest:
+                    version = rest
+                    break
+
+        # Substitute {version} placeholder in URL filter patterns
+        include_patterns = None
+        exclude_patterns = None
+        if discovery_result:
+            raw_include = discovery_result.url_filters.get("include")
+            raw_exclude = discovery_result.url_filters.get("exclude")
+            if raw_include is not None:
+                include_patterns = [p.replace("{version}", version) for p in raw_include]
+            if raw_exclude is not None:
+                exclude_patterns = [p.replace("{version}", version) for p in raw_exclude]
 
         url_filter = URLFilter(
             base_url=base_url,
@@ -182,7 +202,10 @@ class CrawlEngine:
         if not resume:
             for seed in seeds:
                 norm_seed = normalize_url(seed)
-                if url_filter.is_allowed(norm_seed):
+                # Enqueue seeds directly (don't apply include/exclude path filters;
+                # those are for links discovered during the crawl, not the entry point).
+                parsed = urlparse(norm_seed)
+                if parsed.netloc:
                     await self.enqueue(norm_seed, depth=0)
 
         fetched_results: list[FetchResult] = []
