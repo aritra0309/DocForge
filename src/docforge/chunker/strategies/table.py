@@ -30,9 +30,7 @@ class TableChunker(BaseChunkingStrategy):
 
     def chunk(self, page: ClassifiedPage) -> list[Chunk]:
         sections = self._parse_sections(page.markdown, page)
-        texts = merge_small_chunks(
-            [s["content"] for s in sections], self.min_chunk_size
-        )
+        texts = merge_small_chunks([s["content"] for s in sections], self.min_chunk_size)
         return self._to_chunks(page, texts, sections)
 
     def _parse_sections(self, markdown: str, page: ClassifiedPage) -> list[dict]:
@@ -44,10 +42,12 @@ class TableChunker(BaseChunkingStrategy):
 
         def flush_current() -> None:
             if current_lines:
-                sections.append({
-                    "heading": "",
-                    "content": "\n".join(current_lines).strip(),
-                })
+                sections.append(
+                    {
+                        "heading": "",
+                        "content": "\n".join(current_lines).strip(),
+                    }
+                )
                 current_lines.clear()
 
         for line in lines:
@@ -78,25 +78,31 @@ class TableChunker(BaseChunkingStrategy):
             self._chunk_table(table_lines, sections)
 
         if current_lines:
-            sections.append({
-                "heading": "",
-                "content": "\n".join(current_lines).strip(),
-            })
+            sections.append(
+                {
+                    "heading": "",
+                    "content": "\n".join(current_lines).strip(),
+                }
+            )
 
         if not sections and markdown.strip():
-            sections.append({
-                "heading": page.title,
-                "content": markdown,
-            })
+            sections.append(
+                {
+                    "heading": page.title,
+                    "content": markdown,
+                }
+            )
 
         return sections
 
     def _chunk_table(self, table_lines: list[str], sections: list[dict]) -> None:
         if len(table_lines) < _MIN_TABLE_LINES:
-            sections.append({
-                "heading": "",
-                "content": "\n".join(table_lines),
-            })
+            sections.append(
+                {
+                    "heading": "",
+                    "content": "\n".join(table_lines),
+                }
+            )
             return
 
         header = table_lines[0]
@@ -105,20 +111,24 @@ class TableChunker(BaseChunkingStrategy):
 
         full_table = "\n".join(table_lines)
         if count_tokens(full_table) <= self.max_chunk_size:
-            sections.append({
-                "heading": "",
-                "content": full_table,
-            })
+            sections.append(
+                {
+                    "heading": "",
+                    "content": full_table,
+                }
+            )
             return
 
         header_tokens = max(count_tokens(header + separator + "|  |"), 1)
         rows_per_chunk = max(1, self.max_chunk_size // header_tokens)
         for start in range(0, len(data_rows), rows_per_chunk):
-            chunk_rows = [header, separator, *data_rows[start:start + rows_per_chunk]]
-            sections.append({
-                "heading": "",
-                "content": "\n".join(chunk_rows),
-            })
+            chunk_rows = [header, separator, *data_rows[start : start + rows_per_chunk]]
+            sections.append(
+                {
+                    "heading": "",
+                    "content": "\n".join(chunk_rows),
+                }
+            )
 
     def _to_chunks(
         self, page: ClassifiedPage, texts: list[str], sections: list[dict]
@@ -128,29 +138,31 @@ class TableChunker(BaseChunkingStrategy):
         for i, text in enumerate(texts):
             section_heading = sections[i].get("heading", "") if i < len(sections) else ""
             has_code, code_langs = self._detect_code(text)
-            chunks.append(Chunk(
-                content=text,
-                metadata=ChunkMetadata(
-                    chunk_id="",
-                    parent_page_id="",
-                    software="",
-                    version="",
-                    url=page.url,
-                    title=page.title,
-                    page_type=page.page_type,
-                    breadcrumb=page.breadcrumb,
-                    section_heading=section_heading,
-                    chunk_index=i,
-                    total_chunks=total,
-                    has_code=has_code,
-                    code_languages=code_langs,
-                    content_hash="",
-                    crawl_timestamp=datetime.now(UTC),
-                    embedding_model="",
-                    embedding_dimension=0,
-                    docforge_version="",
-                ),
-            ))
+            chunks.append(
+                Chunk(
+                    content=text,
+                    metadata=ChunkMetadata(
+                        chunk_id="",
+                        parent_page_id="",
+                        software="",
+                        version="",
+                        url=page.url,
+                        title=page.title,
+                        page_type=page.page_type,
+                        breadcrumb=page.breadcrumb,
+                        section_heading=section_heading,
+                        chunk_index=i,
+                        total_chunks=total,
+                        has_code=has_code,
+                        code_languages=code_langs,
+                        content_hash="",
+                        crawl_timestamp=datetime.now(UTC),
+                        embedding_model="",
+                        embedding_dimension=0,
+                        docforge_version="",
+                    ),
+                )
+            )
         return chunks
 
     @staticmethod

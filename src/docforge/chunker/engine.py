@@ -34,7 +34,9 @@ class ChunkingEngine:
             return self._strategies[page_type]
 
         if page_type in {
-            PageType.API_REFERENCE, PageType.FUNCTION_REFERENCE, PageType.CONFIGURATION,
+            PageType.API_REFERENCE,
+            PageType.FUNCTION_REFERENCE,
+            PageType.CONFIGURATION,
         }:
             strategy: ChunkingStrategy = ApiRefChunker(
                 target_chunk_size=self.target_chunk_size,

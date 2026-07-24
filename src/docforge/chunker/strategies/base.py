@@ -20,9 +20,7 @@ def count_tokens(text: str) -> int:
     return len(_get_encoder().encode(text))
 
 
-def split_by_tokens(
-    text: str, max_tokens: int, separator: str = "\n\n"
-) -> list[str]:
+def split_by_tokens(text: str, max_tokens: int, separator: str = "\n\n") -> list[str]:
     if count_tokens(text) <= max_tokens:
         return [text]
 
@@ -45,9 +43,7 @@ def split_by_tokens(
     return chunks
 
 
-def merge_small_chunks(
-    chunks: list[str], min_tokens: int
-) -> list[str]:
+def merge_small_chunks(chunks: list[str], min_tokens: int) -> list[str]:
     if not chunks:
         return []
     merged: list[str] = [chunks[0]]
@@ -73,8 +69,7 @@ class BaseChunkingStrategy(ChunkingStrategy, ABC):
         self.min_chunk_size = min_chunk_size
 
     @abstractmethod
-    def chunk(self, page: ClassifiedPage) -> list[Chunk]:
-        ...
+    def chunk(self, page: ClassifiedPage) -> list[Chunk]: ...
 
 
 __all__ = [

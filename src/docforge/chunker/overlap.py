@@ -7,9 +7,7 @@ import tiktoken
 _ENCODING = "cl100k_base"
 
 
-def apply_overlap(
-    texts: list[str], overlap_tokens: int
-) -> list[str]:
+def apply_overlap(texts: list[str], overlap_tokens: int) -> list[str]:
     if not texts or overlap_tokens <= 0:
         return texts[:]
 

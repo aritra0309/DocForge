@@ -32,9 +32,7 @@ class HeadingChunker(BaseChunkingStrategy):
     def chunk(self, page: ClassifiedPage) -> list[Chunk]:
         sections = self._build_sections(page.markdown)
         sections = self._split_oversized(sections)
-        texts = merge_small_chunks(
-            [s["content"] for s in sections], self.min_chunk_size
-        )
+        texts = merge_small_chunks([s["content"] for s in sections], self.min_chunk_size)
         return self._to_chunks(page, texts, sections)
 
     def _build_sections(self, markdown: str) -> list[dict[str, Any]]:
@@ -114,11 +112,13 @@ class HeadingChunker(BaseChunkingStrategy):
             else:
                 sub_texts = split_by_tokens(sec["content"], self.target_chunk_size)
                 for t in sub_texts:
-                    result.append({
-                        "h1": sec["h1"],
-                        "h2": sec["h2"],
-                        "content": t,
-                    })
+                    result.append(
+                        {
+                            "h1": sec["h1"],
+                            "h2": sec["h2"],
+                            "content": t,
+                        }
+                    )
         return result
 
     def _to_chunks(
@@ -131,29 +131,31 @@ class HeadingChunker(BaseChunkingStrategy):
             if i < len(sections):
                 section_heading = sections[i].get("h2") or sections[i].get("h1") or ""
             has_code, code_langs = self._detect_code(text)
-            chunks.append(Chunk(
-                content=text,
-                metadata=ChunkMetadata(
-                    chunk_id="",
-                    parent_page_id="",
-                    software="",
-                    version="",
-                    url=page.url,
-                    title=page.title,
-                    page_type=page.page_type,
-                    breadcrumb=page.breadcrumb,
-                    section_heading=section_heading,
-                    chunk_index=i,
-                    total_chunks=total,
-                    has_code=has_code,
-                    code_languages=code_langs,
-                    content_hash="",
-                    crawl_timestamp=datetime.now(UTC),
-                    embedding_model="",
-                    embedding_dimension=0,
-                    docforge_version="",
-                ),
-            ))
+            chunks.append(
+                Chunk(
+                    content=text,
+                    metadata=ChunkMetadata(
+                        chunk_id="",
+                        parent_page_id="",
+                        software="",
+                        version="",
+                        url=page.url,
+                        title=page.title,
+                        page_type=page.page_type,
+                        breadcrumb=page.breadcrumb,
+                        section_heading=section_heading,
+                        chunk_index=i,
+                        total_chunks=total,
+                        has_code=has_code,
+                        code_languages=code_langs,
+                        content_hash="",
+                        crawl_timestamp=datetime.now(UTC),
+                        embedding_model="",
+                        embedding_dimension=0,
+                        docforge_version="",
+                    ),
+                )
+            )
         return chunks
 
     @staticmethod

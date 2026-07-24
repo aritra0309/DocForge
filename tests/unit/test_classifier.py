@@ -156,8 +156,8 @@ class TestRuleBasedScorer:
             url="https://example.com/examples",
             title="Examples",
             markdown=(
-            "# Examples\n\n```python\nprint('hello')\n```\n\n```javascript\nconsole.log('hi')\n```"
-        ),
+                "# Examples\n\n```python\nprint('hello')\n```\n\n```javascript\nconsole.log('hi')\n```"
+            ),
             headings=["Examples"],
             code_blocks=[
                 {"language": "python", "content": "print('hello')"},
@@ -192,9 +192,7 @@ class TestClassificationEngine:
         engine = ClassificationEngine()
         assert isinstance(engine, ClassificationEngine)
 
-    def test_classify_returns_classified_page(
-        self, tutorial_page: ExtractedPage
-    ) -> None:
+    def test_classify_returns_classified_page(self, tutorial_page: ExtractedPage) -> None:
         engine = ClassificationEngine()
         result = engine.classify(tutorial_page)
         assert isinstance(result, ClassifiedPage)
@@ -202,9 +200,7 @@ class TestClassificationEngine:
         assert result.page_type == PageType.TUTORIAL
         assert result.confidence >= 0.70
 
-    def test_registry_hints_override_rules(
-        self, engine_with_hints: ClassificationEngine
-    ) -> None:
+    def test_registry_hints_override_rules(self, engine_with_hints: ClassificationEngine) -> None:
         page = ExtractedPage(
             url="https://example.com/docs/tutorial/install",
             title="Some Random Title",
@@ -218,9 +214,7 @@ class TestClassificationEngine:
         assert result.page_type == PageType.TUTORIAL
         assert result.confidence == 1.0
 
-    def test_registry_hint_reference(
-        self, engine_with_hints: ClassificationEngine
-    ) -> None:
+    def test_registry_hint_reference(self, engine_with_hints: ClassificationEngine) -> None:
         page = ExtractedPage(
             url="https://example.com/docs/api/endpoints",
             title="Random",

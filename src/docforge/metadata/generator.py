@@ -36,9 +36,7 @@ class MetadataGenerator:
         self.embedding_dimension = embedding_dimension
         self.docforge_version = docforge_version
 
-    def generate(
-        self, chunks: list[Chunk], page: ClassifiedPage
-    ) -> list[Chunk]:
+    def generate(self, chunks: list[Chunk], page: ClassifiedPage) -> list[Chunk]:
         """Populate metadata for all chunks from a single page.
 
         Args:
@@ -52,10 +50,7 @@ class MetadataGenerator:
         parent_page_id = self._compute_page_id(page)
         now = datetime.now(UTC)
 
-        return [
-            self._enrich(chunk, page, parent_page_id, now, i)
-            for i, chunk in enumerate(chunks)
-        ]
+        return [self._enrich(chunk, page, parent_page_id, now, i) for i, chunk in enumerate(chunks)]
 
     @staticmethod
     def _compute_page_id(page: ClassifiedPage) -> str:
@@ -76,7 +71,8 @@ class MetadataGenerator:
 
         content_hash = compute_content_hash(chunk.content)
         chunk_id = self._compute_chunk_id(
-            section_heading, chunk_index,
+            section_heading,
+            chunk_index,
         )
 
         new_meta = ChunkMetadata(
@@ -102,7 +98,9 @@ class MetadataGenerator:
         return Chunk(content=chunk.content, metadata=new_meta)
 
     def _compute_chunk_id(
-        self, section_heading: str, chunk_index: int,
+        self,
+        section_heading: str,
+        chunk_index: int,
     ) -> str:
         return generate_chunk_id(
             software=self.software,

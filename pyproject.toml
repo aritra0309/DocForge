@@ -144,10 +144,10 @@ preview = true
 "tests/**/*.py" = ["S101", "S106", "T201", "T203", "PLR6301", "PLR2004", "RUF069", "B017", "PLC2701", "PLC0415"]
 "src/docforge/__main__.py" = ["T201"]
 "src/docforge/crawler/cache.py" = ["PLR6301"]
-"src/docforge/crawler/engine.py" = ["PLR0915", "PLR1702", "PLW0717", "PLR2004"]
+"src/docforge/crawler/engine.py" = ["PLR0915", "PLR1702", "PLR2004"]
 "src/docforge/crawler/fetcher.py" = ["PLR2004"]
 "src/docforge/extractor/callouts.py" = ["PLR0911"]
-"src/docforge/extractor/cleaners.py" = ["TRY300", "PLW0717"]
+"src/docforge/extractor/cleaners.py" = ["TRY300"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["docforge"]
@@ -160,7 +160,7 @@ skip-magic-trailing-comma = false
 line-ending = "lf"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

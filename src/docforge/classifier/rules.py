@@ -46,7 +46,7 @@ class RuleBasedScorer:
         if not combined:
             return (PageType.UNKNOWN, 0.0)
 
-        best_type = max(combined, key=combined.get)
+        best_type = max(combined, key=combined.__getitem__)
         best_score = combined[best_type]
 
         if best_score < self.confidence_threshold:
@@ -112,9 +112,7 @@ class RuleBasedScorer:
     @staticmethod
     def _score_meta(raw_metadata: dict[str, str]) -> dict[PageType, float]:
         scores: dict[PageType, float] = {}
-        combined = " ".join(
-            f"{k}:{v}" for k, v in raw_metadata.items()
-        ).lower()
+        combined = " ".join(f"{k}:{v}" for k, v in raw_metadata.items()).lower()
         for pt, patterns in META_SIGNALS.items():
             for pat in patterns:
                 if pat.lower() in combined:
@@ -137,9 +135,7 @@ class RuleBasedScorer:
         return {k: min(v, 1.0) for k, v in scores.items()}
 
     @staticmethod
-    def _match_patterns(
-        text: str, signal_map: dict[PageType, list[str]]
-    ) -> dict[PageType, float]:
+    def _match_patterns(text: str, signal_map: dict[PageType, list[str]]) -> dict[PageType, float]:
         scores: dict[PageType, float] = {}
         text_lower = text.lower()
         for pt, patterns in signal_map.items():

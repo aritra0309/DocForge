@@ -53,8 +53,12 @@ def heading_page() -> ClassifiedPage:
             "Basic usage instructions for everyday tasks and common workflows."
         ),
         headings=[
-            "User Guide", "Installation", "Configuration",
-            "Option A", "Option B", "Usage",
+            "User Guide",
+            "Installation",
+            "Configuration",
+            "Option A",
+            "Option B",
+            "Usage",
         ],
         code_blocks=[{"language": "bash", "content": "pip install foo"}],
         breadcrumb=["Docs", "Guide"],
@@ -124,7 +128,9 @@ def tutorial_page() -> ClassifiedPage:
         ),
         headings=[
             "Installation Tutorial",
-            "Step 1: Download", "Step 2: Extract", "Step 3: Install",
+            "Step 1: Download",
+            "Step 2: Extract",
+            "Step 3: Install",
         ],
         code_blocks=[
             {"language": "bash", "content": "wget https://example.com/pkg.tar.gz"},
@@ -268,10 +274,12 @@ class TestHeadingChunker:
                 "## Section 2\n\nMore text."
             ),
             headings=["Code", "Section 1", "Section 2"],
-            code_blocks=[{
-                "language": "python",
-                "content": "line1\nline2\nline3\nline4\nline5",
-            }],
+            code_blocks=[
+                {
+                    "language": "python",
+                    "content": "line1\nline2\nline3\nline4\nline5",
+                }
+            ],
             breadcrumb=[],
             raw_metadata={},
             page_type=PageType.GUIDE,
@@ -379,9 +387,7 @@ class TestTableChunker:
         assert all(isinstance(c, Chunk) for c in chunks)
 
     def test_large_table_split(self) -> None:
-        rows = "\n".join(
-            [f"| val{i} | data{i} |" for i in range(50)]
-        )
+        rows = "\n".join([f"| val{i} | data{i} |" for i in range(50)])
         table_md = f"| Header1 | Header2 |\n|------|------|\n{rows}"
         page = ClassifiedPage(
             url="https://example.com/docs",
@@ -406,9 +412,7 @@ class TestTableChunker:
 
 
 class TestChunkingEngine:
-    def test_selects_heading_chunker_for_guide(
-        self, heading_page: ClassifiedPage
-    ) -> None:
+    def test_selects_heading_chunker_for_guide(self, heading_page: ClassifiedPage) -> None:
         engine = ChunkingEngine()
         chunks = engine.chunk(heading_page)
         assert len(chunks) >= 2
@@ -423,9 +427,7 @@ class TestChunkingEngine:
         chunks = engine.chunk(tutorial_page)
         assert len(chunks) >= 2
 
-    def test_selects_code_chunker_for_examples(
-        self, examples_page: ClassifiedPage
-    ) -> None:
+    def test_selects_code_chunker_for_examples(self, examples_page: ClassifiedPage) -> None:
         engine = ChunkingEngine()
         chunks = engine.chunk(examples_page)
         assert len(chunks) >= 1
@@ -457,8 +459,7 @@ class TestChunkingEngine:
             url="https://example.com/docs",
             title="Test",
             markdown=(
-                "# H1\n\n## Section A\n\n" + "word " * 200
-                + "\n\n## Section B\n\n" + "word " * 200
+                "# H1\n\n## Section A\n\n" + "word " * 200 + "\n\n## Section B\n\n" + "word " * 200
             ),
             headings=["H1", "Section A", "Section B"],
             code_blocks=[],
@@ -478,8 +479,7 @@ class TestChunkingEngine:
             url="https://example.com/docs/guide",
             title="Guide",
             markdown=(
-                "# Guide\n\nIntro.\n\n## Section 1\n\nContent 1.\n\n"
-                "## Section 2\n\nContent 2."
+                "# Guide\n\nIntro.\n\n## Section 1\n\nContent 1.\n\n## Section 2\n\nContent 2."
             ),
             headings=["Guide", "Section 1", "Section 2"],
             code_blocks=[],
