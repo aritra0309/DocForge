@@ -73,12 +73,39 @@ async def _run_crawl(
     return pages, elapsed
 
 
+async def _process_single_page(
+    page: FetchResult,
+    *,
+    page_index: int,
+    total: int,
+    extractor: ExtractionEngine,
+    classifier: ClassificationEngine,
+    chunker: ChunkingEngine,
+    meta_gen: MetadataGenerator,
+) -> dict | None:
+    try:
+        extracted = await extractor.extract(page)
+        classified = classifier.classify(extracted)
+        chunks = chunker.chunk(classified)
+        enriched = meta_gen.generate(chunks, classified)
+        result = {
+            "extracted": extracted,
+            "classified": classified,
+            "chunks": chunks,
+            "enriched": enriched,
+        }
+    except Exception as e:
+        print(f"  [{page_index + 1:2d}/{total:2d}] ERROR: {page.url[:80]} - {e}")
+        return None
+    else:
+        return result
+
+
 async def _process_pages(
     pages: list[FetchResult],
     result: DiscoveryResult,
 ) -> tuple[list, Counter, list[dict], float]:
-    registry = load_registry()
-    entry = registry.lookup("postgresql")
+    entry = load_registry().lookup("postgresql")
     assert entry is not None
 
     extractor = ExtractionEngine(content_selectors=result.content_selectors)
@@ -92,28 +119,31 @@ async def _process_pages(
 
     extract_start = time.monotonic()
     for i, page in enumerate(pages):
-        try:
-            extracted = await extractor.extract(page)
-            classified = classifier.classify(extracted)
-            chunks = chunker.chunk(classified)
-            enriched = meta_gen.generate(chunks, classified)
-
-            type_counts[classified.page_type.value] += 1
-            page_stats.append(
-                {
-                    "url": page.url,
-                    "title": extracted.title,
-                    "type": classified.page_type.value,
-                    "n_chunks": len(chunks),
-                }
-            )
-            all_chunks.extend(enriched)
-            print(
-                f"  [{i + 1:2d}/{len(pages):2d}] {classified.page_type.value:20s} | "
-                f"{extracted.title[:50]:50s} | {len(chunks):2d} chunks"
-            )
-        except Exception as e:
-            print(f"  [{i + 1:2d}/{len(pages):2d}] ERROR: {page.url[:80]} - {e}")
+        p = await _process_single_page(
+            page,
+            page_index=i,
+            total=len(pages),
+            extractor=extractor,
+            classifier=classifier,
+            chunker=chunker,
+            meta_gen=meta_gen,
+        )
+        if p is None:
+            continue
+        type_counts[p["classified"].page_type.value] += 1
+        page_stats.append(
+            {
+                "url": page.url,
+                "title": p["extracted"].title,
+                "type": p["classified"].page_type.value,
+                "n_chunks": len(p["chunks"]),
+            }
+        )
+        all_chunks.extend(p["enriched"])
+        print(
+            f"  [{i + 1:2d}/{len(pages):2d}] {p['classified'].page_type.value:20s} | "
+            f"{p['extracted'].title[:50]:50s} | {len(p['chunks']):2d} chunks"
+        )
     extract_elapsed = time.monotonic() - extract_start
     return all_chunks, type_counts, page_stats, extract_elapsed
 
