@@ -146,9 +146,13 @@ preview = true
 "src/docforge/crawler/cache.py" = ["PLR6301"]
 "src/docforge/crawler/engine.py" = ["PLR0915", "PLR1702", "PLR2004"]
 "src/docforge/crawler/fetcher.py" = ["PLR2004"]
+"src/docforge/storage/metadata_store.py" = ["PLR0904", "PLR0917"]
+"src/docforge/storage/engine.py" = ["TRY003"]
+"tests/unit/test_storage.py" = ["PLR0917"]
 "src/docforge/extractor/callouts.py" = ["PLR0911"]
 "src/docforge/embeddings/engine.py" = ["PLR0917", "PLR0914"]
 "src/docforge/embeddings/providers/*.py" = ["PLC0415"]
+"src/docforge/storage/backends/*.py" = ["PLC0415", "F401", "PLR6301"]
 "src/docforge/extractor/cleaners.py" = ["TRY300"]
 
 [tool.ruff.lint.isort]

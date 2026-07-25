@@ -9,8 +9,10 @@ from docforge.core.models import (
     Chunk,
     ClassifiedPage,
     DiscoveryResult,
+    EmbeddedChunk,
     ExtractedPage,
     FetchResult,
+    SearchResult,
 )
 
 
@@ -172,14 +174,14 @@ class VectorStore(ABC):
         """
 
     @abstractmethod
-    async def upsert(self, chunks: list[Chunk]) -> None:
+    async def upsert(self, chunks: list[EmbeddedChunk]) -> None:
         """Insert or update chunks in the vector store.
 
         Upsert is idempotent — inserting the same chunk twice does not
         create duplicates. Chunks are matched by their chunk_id.
 
         Args:
-            chunks: List of chunks with their metadata and embeddings.
+            chunks: List of embedded chunks with vectors and metadata.
         """
 
     @abstractmethod
@@ -188,7 +190,7 @@ class VectorStore(ABC):
         query_vector: list[float],
         k: int = 10,
         filters: dict[str, Any] | None = None,
-    ) -> list[Chunk]:
+    ) -> list[SearchResult]:
         """Search for the top-k most similar chunks to a query vector.
 
         Args:
@@ -198,7 +200,7 @@ class VectorStore(ABC):
                 (e.g. {'software': 'postgresql', 'version': '17'}).
 
         Returns:
-            A list of Chunks ranked by similarity (highest score first).
+            A list of SearchResults ranked by similarity (highest score first).
         """
 
     @abstractmethod
