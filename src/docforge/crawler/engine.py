@@ -155,11 +155,7 @@ class CrawlEngine:
         Returns:
             List of successfully fetched FetchResult objects.
         """
-        if isinstance(seed_urls, str):
-            seeds = [seed_urls]
-        else:
-            seeds = list(seed_urls)
-
+        seeds = self._resolve_seeds(seed_urls)
         if not seeds:
             return []
 
@@ -169,18 +165,42 @@ class CrawlEngine:
             self.clear_queue()
 
         base_url = discovery_result.base_url if discovery_result else seeds[0]
+        version = self._resolve_version(seeds, discovery_result, base_url)
+        url_filter = self._build_url_filter(discovery_result, base_url, version)
+        limit = max_pages or self.crawler_config.max_pages_per_version
 
-        # Extract version from seed URL by removing base_url prefix
-        version = ""
-        if discovery_result:
-            base_stripped = base_url.rstrip("/")
-            for seed in seeds:
-                rest = seed.replace(base_stripped, "").strip("/")
-                if rest and "/" not in rest:
-                    version = rest
-                    break
+        if not resume:
+            await self._enqueue_seeds(seeds)
 
-        # Substitute {version} placeholder in URL filter patterns
+        return await self._run_crawl(url_filter, limit)
+
+    @staticmethod
+    def _resolve_seeds(seed_urls: str | list[str]) -> list[str]:
+        if isinstance(seed_urls, str):
+            return [seed_urls]
+        return list(seed_urls)
+
+    @staticmethod
+    def _resolve_version(
+        seeds: list[str],
+        discovery_result: DiscoveryResult | None,
+        base_url: str,
+    ) -> str:
+        if not discovery_result:
+            return ""
+        base_stripped = base_url.rstrip("/")
+        for seed in seeds:
+            rest = seed.replace(base_stripped, "").strip("/")
+            if rest and "/" not in rest:
+                return rest
+        return ""
+
+    @staticmethod
+    def _build_url_filter(
+        discovery_result: DiscoveryResult | None,
+        base_url: str,
+        version: str,
+    ) -> URLFilter:
         include_patterns = None
         exclude_patterns = None
         if discovery_result:
@@ -190,31 +210,30 @@ class CrawlEngine:
                 include_patterns = [p.replace("{version}", version) for p in raw_include]
             if raw_exclude is not None:
                 exclude_patterns = [p.replace("{version}", version) for p in raw_exclude]
-
-        url_filter = URLFilter(
+        return URLFilter(
             base_url=base_url,
             include_patterns=include_patterns,
             exclude_patterns=exclude_patterns,
         )
 
-        limit = max_pages or self.crawler_config.max_pages_per_version
+    async def _enqueue_seeds(self, seeds: list[str]) -> None:
+        for seed in seeds:
+            norm_seed = normalize_url(seed)
+            parsed = urlparse(norm_seed)
+            if parsed.netloc:
+                await self.enqueue(norm_seed, depth=0)
 
-        if not resume:
-            for seed in seeds:
-                norm_seed = normalize_url(seed)
-                # Enqueue seeds directly (don't apply include/exclude path filters;
-                # those are for links discovered during the crawl, not the entry point).
-                parsed = urlparse(norm_seed)
-                if parsed.netloc:
-                    await self.enqueue(norm_seed, depth=0)
-
+    async def _run_crawl(
+        self,
+        url_filter: URLFilter,
+        limit: int,
+    ) -> list[FetchResult]:
         fetched_results: list[FetchResult] = []
         fetched_urls: set[str] = set()
         count_lock = asyncio.Lock()
         fetched_count = 0
         active_workers = 0
         active_lock = asyncio.Lock()
-
         sem = asyncio.Semaphore(self.parallelism)
 
         async def worker() -> None:
@@ -223,14 +242,10 @@ class CrawlEngine:
                 active_workers += 1
             try:
                 while True:
-                    async with count_lock:
-                        if fetched_count >= limit:
-                            break
-
+                    if await self._check_limit(limit, count_lock, fetched_count):
+                        break
                     item = await self.pop_next()
                     if item is None:
-                        # Queue is empty — check if other workers are still active
-                        # and may enqueue new URLs. If so, yield and retry.
                         async with active_lock:
                             others_running = active_workers > 1
                         if others_running:
@@ -238,34 +253,37 @@ class CrawlEngine:
                             continue
                         break
                     url, depth = item
-
                     async with sem:
                         async with count_lock:
                             if fetched_count >= limit:
                                 await self.mark_status(url, "pending")
                                 break
-
                         result = await self._try_process_url(url, url_filter, depth)
                         if result is None:
                             continue
-
                         if result.url not in fetched_urls:
                             async with count_lock:
                                 if fetched_count < limit:
                                     fetched_urls.add(result.url)
                                     fetched_results.append(result)
                                     fetched_count += 1
-                            await self.mark_status(url, "completed")
-                        else:
-                            await self.mark_status(url, "completed")
+                        await self.mark_status(url, "completed")
             finally:
                 async with active_lock:
                     active_workers -= 1
 
         workers = [asyncio.create_task(worker()) for _ in range(self.parallelism)]
         await asyncio.gather(*workers)
-
         return fetched_results
+
+    @staticmethod
+    async def _check_limit(
+        limit: int,
+        lock: asyncio.Lock,
+        count: int,
+    ) -> bool:
+        async with lock:
+            return count >= limit
 
     async def _process_url(
         self,

@@ -47,9 +47,7 @@ def _chunk(text: str, idx: int) -> Chunk:
 
 @pytest.mark.asyncio
 async def test_sentence_transformers_embeds_batch() -> None:
-    provider = SentenceTransformersProvider(
-        model_name="BAAI/bge-small-en-v1.5"
-    )
+    provider = SentenceTransformersProvider(model_name="BAAI/bge-small-en-v1.5")
     texts = [f"This is test document number {i}." for i in range(64)]
     vectors = await provider.embed_batch(texts)
     assert len(vectors) == 64
@@ -60,9 +58,7 @@ async def test_sentence_transformers_embeds_batch() -> None:
 
 @pytest.mark.asyncio
 async def test_engine_with_sentence_transformers() -> None:
-    provider = SentenceTransformersProvider(
-        model_name="BAAI/bge-small-en-v1.5"
-    )
+    provider = SentenceTransformersProvider(model_name="BAAI/bge-small-en-v1.5")
     tmp = tempfile.mktemp(suffix=".db")
     cache = EmbeddingCache(tmp)
     engine = EmbeddingEngine(provider, cache=cache, batch_size=16)
@@ -84,9 +80,7 @@ async def test_engine_with_sentence_transformers() -> None:
 
 @pytest.mark.asyncio
 async def test_engine_batches_large_corpus() -> None:
-    provider = SentenceTransformersProvider(
-        model_name="BAAI/bge-small-en-v1.5"
-    )
+    provider = SentenceTransformersProvider(model_name="BAAI/bge-small-en-v1.5")
     engine = EmbeddingEngine(provider, batch_size=32)
 
     chunks = [_chunk(f"Chunk {i}: {'hello world ' * 10}", i) for i in range(100)]

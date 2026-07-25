@@ -226,9 +226,7 @@ class TestVoyageEmbeddingProvider:
     async def test_embed_batch_mocked(self) -> None:
         provider = VoyageEmbeddingProvider(api_key="vo-test")
         mock_client = AsyncMock()
-        mock_client.embed.return_value = MagicMock(
-            embeddings=[[0.1, 0.2], [0.3, 0.4]]
-        )
+        mock_client.embed.return_value = MagicMock(embeddings=[[0.1, 0.2], [0.3, 0.4]])
         provider._client = mock_client
         result = await provider.embed_batch(["hello", "world"])
         assert len(result) == 2
@@ -316,9 +314,7 @@ class TestEmbeddingEngine:
         chunks = [_make_chunk(f"text_{i}") for i in range(3)]
         progress: list[EmbeddingProgress] = []
 
-        engine = EmbeddingEngine(
-            provider, batch_size=2, progress_callback=progress.append
-        )
+        engine = EmbeddingEngine(provider, batch_size=2, progress_callback=progress.append)
         await engine.embed(chunks)
         assert len(progress) == 2
         assert progress[0].total_chunks == 3

@@ -56,8 +56,7 @@ class EmbeddingCache:
         with self._lock:
             conn = self._get_conn()
             row = conn.execute(
-                "SELECT vector FROM embedding_cache "
-                "WHERE model_name = ? AND content_hash = ?",
+                "SELECT vector FROM embedding_cache WHERE model_name = ? AND content_hash = ?",
                 (model_name, content_hash),
             ).fetchone()
             if row is None:
@@ -80,9 +79,7 @@ class EmbeddingCache:
             )
             conn.commit()
 
-    def put_batch(
-        self, model_name: str, keys: list[str], vectors: list[list[float]]
-    ) -> None:
+    def put_batch(self, model_name: str, keys: list[str], vectors: list[list[float]]) -> None:
         """Store multiple embedding vectors in a single transaction."""
         with self._lock:
             conn = self._get_conn()
@@ -120,9 +117,7 @@ class EmbeddingCache:
                     (model_name,),
                 ).fetchone()
             else:
-                row = conn.execute(
-                    "SELECT COUNT(*) FROM embedding_cache"
-                ).fetchone()
+                row = conn.execute("SELECT COUNT(*) FROM embedding_cache").fetchone()
             result: int = row[0] if row else 0
             return result
 

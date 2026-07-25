@@ -174,7 +174,7 @@ class EmbeddingEngine:
             except Exception as exc:
                 last_exc = exc
                 if attempt < self._max_retries - 1:
-                    wait = 2 ** attempt * 0.5
+                    wait = 2**attempt * 0.5
                     await asyncio.sleep(wait)
         msg = f"Embedding failed after {self._max_retries} retries"
         raise RuntimeError(msg) from last_exc

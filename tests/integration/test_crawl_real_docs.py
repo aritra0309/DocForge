@@ -14,7 +14,8 @@ import pytest
 
 from docforge.chunker.engine import ChunkingEngine
 from docforge.classifier.engine import ClassificationEngine
-from docforge.core.config import load_config
+from docforge.core.config import DocForgeConfig, load_config
+from docforge.core.models import DiscoveryResult, FetchResult
 from docforge.crawler.cache import ResponseCache
 from docforge.crawler.engine import CrawlEngine
 from docforge.discovery.engine import DiscoveryEngine
@@ -22,33 +23,39 @@ from docforge.discovery.registry import load_registry
 from docforge.extractor.engine import ExtractionEngine
 from docforge.metadata.generator import MetadataGenerator
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-@pytest.mark.real_network
-@pytest.mark.asyncio
-@pytest.mark.slow
-async def test_crawl_postgresql_docs(tmp_path: Path) -> None:
-    """Crawl PostgreSQL v17 docs (live), extract, classify, and chunk up to 20 pages."""
-    config = load_config(overrides={
-        "crawler": {
-            "max_pages_per_version": 20,
-            "rate_limit_rps": 3,
-            "cache_ttl_hours": 24,
+
+def _build_config(max_pages: int = 20, rate_limit_rps: int = 3) -> DocForgeConfig:
+    return load_config(
+        overrides={
+            "crawler": {
+                "max_pages_per_version": max_pages,
+                "rate_limit_rps": rate_limit_rps,
+                "cache_ttl_hours": 24,
+            }
         }
-    })
+    )
 
-    # ---- Step 1: Discover ----
-    print("\n=== Discovering postgresql docs ===")
+
+async def _discover(software: str) -> DiscoveryResult:
     discovery = DiscoveryEngine()
-    result = await discovery.discover("postgresql")
+    result = await discovery.discover(software)
     print(f"  Software:  {result.display_name}")
     print(f"  Base URL:  {result.base_url}")
     print(f"  Versions:  {result.versions[:5]}... ({len(result.versions)} total)")
     print(f"  Latest:    {result.latest_version}")
     print(f"  Selectors: {result.content_selectors}")
-    assert result.software == "postgresql"
-    assert result.latest_version == "17"
+    return result
 
-    # ---- Step 2: Crawl ----
+
+async def _run_crawl(
+    tmp_path: Path,
+    config: DocForgeConfig,
+    result: DiscoveryResult,
+) -> tuple[list[FetchResult], float]:
     version_url = f"https://www.postgresql.org/docs/{result.latest_version}/"
     cache = ResponseCache(db_path=str(tmp_path / "crawl_cache.db"))
     engine = CrawlEngine(
@@ -56,17 +63,20 @@ async def test_crawl_postgresql_docs(tmp_path: Path) -> None:
         cache=cache,
         queue_db_path=str(tmp_path / "queue.db"),
     )
-
-    print(f"\n=== Crawling (max 20 pages, 3 RPS) ===")
+    print("\n=== Crawling (max 20 pages, 3 RPS) ===")
     start = time.monotonic()
     pages = await engine.crawl(version_url, discovery_result=result)
     elapsed = time.monotonic() - start
     engine.close()
-
-    print(f"  Fetched:   {len(pages)} pages in {elapsed:.1f}s ({len(pages)/elapsed:.1f} p/s)")
+    print(f"  Fetched:   {len(pages)} pages in {elapsed:.1f}s ({len(pages) / elapsed:.1f} p/s)")
     assert len(pages) > 0
+    return pages, elapsed
 
-    # ---- Step 3–5: Extract → Classify → Chunk ----
+
+async def _process_pages(
+    pages: list[FetchResult],
+    result: DiscoveryResult,
+) -> tuple[list, Counter, list[dict], float]:
     registry = load_registry()
     entry = registry.lookup("postgresql")
     assert entry is not None
@@ -89,38 +99,55 @@ async def test_crawl_postgresql_docs(tmp_path: Path) -> None:
             enriched = meta_gen.generate(chunks, classified)
 
             type_counts[classified.page_type.value] += 1
-            page_stats.append({
-                "url": page.url,
-                "title": extracted.title,
-                "type": classified.page_type.value,
-                "n_chunks": len(chunks),
-            })
+            page_stats.append(
+                {
+                    "url": page.url,
+                    "title": extracted.title,
+                    "type": classified.page_type.value,
+                    "n_chunks": len(chunks),
+                }
+            )
             all_chunks.extend(enriched)
-            print(f"  [{i+1:2d}/{len(pages):2d}] {classified.page_type.value:20s} | "
-                  f"{extracted.title[:50]:50s} | {len(chunks):2d} chunks")
+            print(
+                f"  [{i + 1:2d}/{len(pages):2d}] {classified.page_type.value:20s} | "
+                f"{extracted.title[:50]:50s} | {len(chunks):2d} chunks"
+            )
         except Exception as e:
-            print(f"  [{i+1:2d}/{len(pages):2d}] ERROR: {page.url[:80]} — {e}")
+            print(f"  [{i + 1:2d}/{len(pages):2d}] ERROR: {page.url[:80]} - {e}")
     extract_elapsed = time.monotonic() - extract_start
+    return all_chunks, type_counts, page_stats, extract_elapsed
 
-    # ---- Summary ----
+
+def _print_summary(
+    *,
+    pages: list,
+    all_chunks: list,
+    type_counts: Counter,
+    page_stats: list[dict],
+    elapsed: float,
+    extract_elapsed: float,
+) -> None:
     total_tokens = sum(len(c.content.split()) for c in all_chunks)
-    print(f"\n{'='*70}")
-    print(f"  CRAWL + EXTRACT + CLASSIFY + CHUNK — SUMMARY")
-    print(f"{'='*70}")
+    print(f"\n{'=' * 70}")
+    print("  CRAWL + EXTRACT + CLASSIFY + CHUNK - SUMMARY")
+    print(f"{'=' * 70}")
     print(f"  Pages crawled:      {len(pages):>4d}")
-    print(f"  Crawl time:         {elapsed:>6.1f}s  ({len(pages)/elapsed:.1f} p/s)")
-    print(f"  Extract time:       {extract_elapsed:>6.1f}s  ({len(pages)/extract_elapsed:.1f} p/s)")
+    print(f"  Crawl time:         {elapsed:>6.1f}s  ({len(pages) / elapsed:.1f} p/s)")
+    print(
+        f"  Extract time:       {extract_elapsed:>6.1f}s  ({len(pages) / extract_elapsed:.1f} p/s)"
+    )
     print(f"  Total chunks:       {len(all_chunks):>4d}")
-    print(f"  Avg chunks/page:    {len(all_chunks)/len(pages):>6.1f}")
+    print(f"  Avg chunks/page:    {len(all_chunks) / len(pages):>6.1f}")
     print(f"  Total tokens:       {total_tokens:>6,d}")
-    print(f"\n  Page type distribution:")
+    print("\n  Page type distribution:")
     for ptype, count in sorted(type_counts.items()):
-        print(f"    {ptype:25s}: {count:3d} ({count/len(pages)*100:5.1f}%)")
-    print(f"\n  Per-page detail:")
+        print(f"    {ptype:25s}: {count:3d} ({count / len(pages) * 100:5.1f}%)")
+    print("\n  Per-page detail:")
     for i, ps in enumerate(page_stats):
-        print(f"    {i+1:3d}. {ps['type']:<20s}  chunks={ps['n_chunks']:>3d}  {ps['title']}")
+        print(f"    {i + 1:3d}. {ps['type']:<20s}  chunks={ps['n_chunks']:>3d}  {ps['title']}")
 
-    # ---- Assertions ----
+
+def _assert_chunks(all_chunks: list) -> None:
     assert len(all_chunks) > 0
     for c in all_chunks:
         assert c.metadata.chunk_id
@@ -128,34 +155,76 @@ async def test_crawl_postgresql_docs(tmp_path: Path) -> None:
         assert c.metadata.version == "17"
 
 
+async def _crawl_session(
+    tmp_path: Path,
+    config: DocForgeConfig,
+    version_url: str,
+    *,
+    result: DiscoveryResult,
+    cache_path: str,
+    queue_path: str,
+) -> tuple[list[FetchResult], float]:
+    cache = ResponseCache(db_path=cache_path)
+    engine = CrawlEngine(config=config, cache=cache, queue_db_path=queue_path)
+    start = time.monotonic()
+    pages = await engine.crawl(version_url, discovery_result=result)
+    elapsed = time.monotonic() - start
+    engine.close()
+    return pages, elapsed
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.real_network
+@pytest.mark.asyncio
+@pytest.mark.slow
+async def test_crawl_postgresql_docs(tmp_path: Path) -> None:
+    """Crawl PostgreSQL v17 docs (live), extract, classify, and chunk up to 20 pages."""
+    config = _build_config(max_pages=20, rate_limit_rps=3)
+
+    result = await _discover("postgresql")
+    assert result.software == "postgresql"
+    assert result.latest_version == "17"
+
+    pages, elapsed = await _run_crawl(tmp_path, config, result)
+    all_chunks, type_counts, page_stats, extract_elapsed = await _process_pages(pages, result)
+    _print_summary(
+        pages=pages,
+        all_chunks=all_chunks,
+        type_counts=type_counts,
+        page_stats=page_stats,
+        elapsed=elapsed,
+        extract_elapsed=extract_elapsed,
+    )
+    _assert_chunks(all_chunks)
+
+
 @pytest.mark.real_network
 @pytest.mark.asyncio
 @pytest.mark.slow
 async def test_crawl_cache_hits_on_second_run(tmp_path: Path) -> None:
     """Second crawl of same URL should hit cache (test cache persistence)."""
-    config = load_config(overrides={
-        "crawler": {
-            "max_pages_per_version": 5,
-            "rate_limit_rps": 5,
-        }
-    })
+    config = _build_config(max_pages=5, rate_limit_rps=5)
 
     cache_path = str(tmp_path / "crawl_cache.db")
     queue_path = str(tmp_path / "queue.db")
     version_url = "https://www.postgresql.org/docs/17/"
 
-    # First run — live fetch
     discovery = DiscoveryEngine()
     result = await discovery.discover("postgresql")
-    cache1 = ResponseCache(db_path=cache_path)
-    engine1 = CrawlEngine(config=config, cache=cache1, queue_db_path=queue_path)
-    start1 = time.monotonic()
-    pages1 = await engine1.crawl(version_url, discovery_result=result)
-    time1 = time.monotonic() - start1
-    engine1.close()
-    cache1.close()
 
-    # Second run — should all be cached
+    pages1, time1 = await _crawl_session(
+        tmp_path,
+        config,
+        version_url,
+        result=result,
+        cache_path=cache_path,
+        queue_path=queue_path,
+    )
+
     cache2 = ResponseCache(db_path=cache_path)
     engine2 = CrawlEngine(config=config, cache=cache2, queue_db_path=queue_path)
     start2 = time.monotonic()
@@ -166,5 +235,5 @@ async def test_crawl_cache_hits_on_second_run(tmp_path: Path) -> None:
     assert len(pages2) >= len(pages1)
     print(f"\n  First run  (live):  {len(pages1):>3d} pages in {time1:.2f}s")
     print(f"  Second run (cache): {len(pages2):>3d} pages in {time2:.2f}s")
-    print(f"  Speedup:            {time1/time2:.1f}x faster")
+    print(f"  Speedup:            {time1 / time2:.1f}x faster")
     assert time2 < time1 / 2, "Cached run should be at least 2x faster than live"

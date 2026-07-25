@@ -63,9 +63,7 @@ class SentenceTransformersProvider(EmbeddingProvider):
         if self._model is None:
             from sentence_transformers import SentenceTransformer
 
-            self._model = SentenceTransformer(
-                self._model_name, device=self._torch_device
-            )
+            self._model = SentenceTransformer(self._model_name, device=self._torch_device)
         return self._model
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
