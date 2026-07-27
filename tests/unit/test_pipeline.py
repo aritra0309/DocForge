@@ -115,7 +115,7 @@ class TestEventBus:
         bus = events.EventBus()
         received: list[events.PipelineEvent] = []
 
-        async def handler(event: events.PipelineEvent) -> None:
+        def handler(event: events.PipelineEvent) -> None:
             received.append(event)
 
         bus.on("test.event", handler)
@@ -182,7 +182,7 @@ class TestPipeline:
     @patch("docforge.core.pipeline.ChunkingEngine")
     @patch("docforge.core.pipeline.MetadataGenerator")
     @patch("docforge.core.pipeline.StorageEngine")
-    async def test_run_full_success(
+    async def test_run_full_success(  # noqa: PLR0914, PLR0917
         self,
         mock_store_cls: MagicMock,
         mock_meta_cls: MagicMock,
@@ -252,7 +252,7 @@ class TestPipeline:
     @patch("docforge.core.pipeline.ChunkingEngine")
     @patch("docforge.core.pipeline.MetadataGenerator")
     @patch("docforge.core.pipeline.StorageEngine")
-    async def test_run_full_with_specific_version(
+    async def test_run_full_with_specific_version(  # noqa: PLR0917
         self,
         mock_store_cls: MagicMock,
         mock_meta_cls: MagicMock,
@@ -369,7 +369,7 @@ class TestPipeline:
     @patch("docforge.core.pipeline.ChunkingEngine")
     @patch("docforge.core.pipeline.MetadataGenerator")
     @patch("docforge.core.pipeline.StorageEngine")
-    async def test_page_error_skipped_pipeline_continues(
+    async def test_page_error_skipped_pipeline_continues(  # noqa: PLR0917
         self,
         mock_store_cls: MagicMock,
         mock_meta_cls: MagicMock,

@@ -282,7 +282,7 @@ class Pipeline:
             status=overall,
         )
 
-    async def _run_version(  # noqa: PLR0914  # ruff: ignore[PLR0914]
+    async def _run_version(  # noqa: PLR0914
         self,
         discovery_result: DiscoveryResult,
         version: str,
@@ -367,7 +367,7 @@ class Pipeline:
         vr.total_duration_ms = (time.monotonic() - t0) * 1000
         return vr
 
-    async def _run_version_incremental(  # ruff: ignore[PLR0914]
+    async def _run_version_incremental(  # noqa: PLR0914
         self,
         discovery_result: DiscoveryResult,
         version: str,
@@ -483,7 +483,7 @@ class Pipeline:
                 vr.extraction.pages_failed += 1
                 logger.warning("Failed to remove page %s: %s", url, exc)
 
-    async def _process_changed_pages(  # ruff: ignore[PLR0917]
+    async def _process_changed_pages(  # noqa: PLR0917
         self,
         fetch_results: list[Any],
         extractor: ExtractionEngine,
@@ -499,35 +499,54 @@ class Pipeline:
         differ = ChunkDiffer()
         for fetch_result in fetch_results:
             try:
-                enriched = await self._process_single_page(
+                await self._process_single_changed_page(
                     fetch_result, extractor, classifier, chunker,
-                    metadata_gen, metadata_store, software, version, vr,
+                    metadata_gen, metadata_store, software, version, vr, differ, all_chunks,
                 )
-                diff = await differ.diff_page(
-                    fetch_result.url, enriched, metadata_store,
-                )
-                await self.events.emit(
-                    events.UPDATE_CHUNK_DIFFED,
-                    url=fetch_result.url,
-                    to_add=len(diff.chunks_to_add),
-                    to_update=len(diff.chunks_updated),
-                    to_remove=len(diff.chunks_to_remove),
-                    unchanged=len(diff.unchanged_chunk_ids),
-                )
-                if diff.chunks_to_remove:
-                    try:
-                        for cid in diff.chunks_to_remove:
-                            metadata_store.delete_chunk_state(cid)
-                    except Exception as exc:
-                        msg = "Failed to delete stale chunks for %s: %s"
-                        logger.warning(msg, fetch_result.url, exc)
-                metadata_store.upsert_chunk_states(enriched)
-                all_chunks.extend(diff.chunks_to_add + diff.chunks_updated)
-                await self.events.emit(events.UPDATE_PAGE_REINDEXED, url=fetch_result.url)
             except Exception as exc:
                 vr.extraction.pages_failed += 1
                 logger.warning("Failed to process changed page %s: %s", fetch_result.url, exc)
         return all_chunks
+
+    async def _process_single_changed_page(  # noqa: PLR0917
+        self,
+        fetch_result: Any,
+        extractor: ExtractionEngine,
+        classifier: ClassificationEngine,
+        chunker: ChunkingEngine,
+        metadata_gen: MetadataGenerator,
+        metadata_store: Any,
+        software: str,
+        version: str,
+        vr: PipelineVersionResult,
+        differ: ChunkDiffer,
+        all_chunks: list[Any],
+    ) -> None:
+        enriched = await self._process_single_page(
+            fetch_result, extractor, classifier, chunker,
+            metadata_gen, metadata_store, software, version, vr,
+        )
+        diff = await differ.diff_page(
+            fetch_result.url, enriched, metadata_store,
+        )
+        await self.events.emit(
+            events.UPDATE_CHUNK_DIFFED,
+            url=fetch_result.url,
+            to_add=len(diff.chunks_to_add),
+            to_update=len(diff.chunks_updated),
+            to_remove=len(diff.chunks_to_remove),
+            unchanged=len(diff.unchanged_chunk_ids),
+        )
+        if diff.chunks_to_remove:
+            try:
+                for cid in diff.chunks_to_remove:
+                    metadata_store.delete_chunk_state(cid)
+            except Exception as exc:
+                msg = "Failed to delete stale chunks for %s: %s"
+                logger.warning(msg, fetch_result.url, exc)
+        metadata_store.upsert_chunk_states(enriched)
+        all_chunks.extend(diff.chunks_to_add + diff.chunks_updated)
+        await self.events.emit(events.UPDATE_PAGE_REINDEXED, url=fetch_result.url)
 
     def _init_version_engines(
         self,
@@ -571,28 +590,28 @@ class Pipeline:
         software = discovery_result.software
         base_url = discovery_result.base_url.rstrip("/")
         seed_url = f"{base_url}/{version}/"
+        crawl_t0 = time.monotonic()
+        await self.events.emit(events.CRAWL_STARTED, software=software, version=version)
         try:
-            crawl_t0 = time.monotonic()
-            await self.events.emit(events.CRAWL_STARTED, software=software, version=version)
             fetch_results = await self.crawler.crawl(
                 seed_urls=[seed_url],
                 discovery_result=discovery_result,
                 max_pages=self.config.crawler.max_pages_per_version,
             )
-            vr.crawl.pages_processed = len(fetch_results)
-            vr.crawl.duration_ms = (time.monotonic() - crawl_t0) * 1000
-            await self.events.emit(
-                events.CRAWL_COMPLETED, software=software, version=version,
-                pages=len(fetch_results),
-            )
-            return fetch_results, None  # ruff: ignore[TRY300]
         except Exception as exc:
             err = f"Crawl failed: {exc}"
             vr.status = "failed"
             vr.error = err
             return None, err
+        vr.crawl.pages_processed = len(fetch_results)
+        vr.crawl.duration_ms = (time.monotonic() - crawl_t0) * 1000
+        await self.events.emit(
+            events.CRAWL_COMPLETED, software=software, version=version,
+            pages=len(fetch_results),
+        )
+        return fetch_results, None
 
-    async def _process_pages(  # ruff: ignore[PLR0917]
+    async def _process_pages(  # noqa: PLR0917
         self,
         fetch_results: list[Any],
         extractor: ExtractionEngine,
@@ -683,18 +702,18 @@ class Pipeline:
         )
         try:
             embedded = await self.embedding_engine.embed(all_chunks)
-            vr.embedding.chunks_produced = len(embedded)
-            vr.embedding.duration_ms = (time.monotonic() - embed_t0) * 1000
-            await self.events.emit(
-                events.EMBEDDING_COMPLETED,
-                software=software, version=version, chunks=len(embedded),
-            )
-            return embedded, None
         except Exception as exc:
             err = f"Embedding failed: {exc}"
             vr.status = "failed"
             vr.error = err
             return None, err
+        vr.embedding.chunks_produced = len(embedded)
+        vr.embedding.duration_ms = (time.monotonic() - embed_t0) * 1000
+        await self.events.emit(
+            events.EMBEDDING_COMPLETED,
+            software=software, version=version, chunks=len(embedded),
+        )
+        return embedded, None
 
     async def _store_chunks(
         self,
@@ -707,19 +726,19 @@ class Pipeline:
         store_t0 = time.monotonic()
         try:
             await storage.upsert(embedded)
-            vr.storage.chunks_produced = len(embedded)
-            vr.storage.duration_ms = (time.monotonic() - store_t0) * 1000
-            await self.events.emit(
-                events.STORAGE_UPSERTED, software=software, version=version, chunks=len(embedded),
-            )
-            return None
         except Exception as exc:
             err = f"Storage upsert failed: {exc}"
             vr.status = "failed"
             vr.error = err
             return err
+        vr.storage.chunks_produced = len(embedded)
+        vr.storage.duration_ms = (time.monotonic() - store_t0) * 1000
+        await self.events.emit(
+            events.STORAGE_UPSERTED, software=software, version=version, chunks=len(embedded),
+        )
+        return None
 
-    async def _finalize_version(
+    async def _finalize_version(  # noqa: PLR0917
         self,
         metadata_store: Any,
         run_id: int,

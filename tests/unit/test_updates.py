@@ -365,7 +365,7 @@ class TestUpdateDetector:
 
         with (
             patch("docforge.updates.detector.fetch_sitemap") as mock_fetch,
-            patch.object(detector, "_fetch_changed_and_new") as mock_fetch_new,
+            patch.object(detector, "_fetch_changed_and_new"),
         ):
             mock_fetch.return_value = [
                 _make_sitemap_url("https://example.com/docs/1.0/", None),
