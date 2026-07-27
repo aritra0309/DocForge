@@ -424,11 +424,11 @@ Automatically classify every page into a semantic type. This drives which chunki
 
 **Definition of done:**
 
-- [ ] Correctly classifies ≥ 85% of pages from a PostgreSQL docs sample set
-- [ ] Registry path hints always override rule-based classification
-- [ ] `UNKNOWN` type is returned (not an error) for unrecognised pages
-- [ ] Classification is deterministic (same page always → same result)
-- [ ] Unit tests with labelled fixture pages (known type → assert correct classification)
+- [x] Correctly classifies ≥ 85% of pages from a PostgreSQL docs sample set
+- [x] Registry path hints always override rule-based classification
+- [x] `UNKNOWN` type is returned (not an error) for unrecognised pages
+- [x] Classification is deterministic (same page always → same result)
+- [x] Unit tests with labelled fixture pages (known type → assert correct classification)
 
 ---
 
@@ -476,14 +476,14 @@ Split pages into retrieval-sized units using type-aware strategies. Never naive 
 
 **Definition of done:**
 
-- [ ] No chunk exceeds `max_chunk_size` tokens
-- [ ] No chunk is smaller than 64 tokens (merged with adjacent if too small)
-- [ ] API reference pages produce one chunk per function (verified against fixture)
-- [ ] Tutorial pages produce one chunk per step
-- [ ] Code blocks are never split mid-block by any strategy
-- [ ] Context prefix is correctly injected into every chunk
-- [ ] Chunking throughput ≥ 1,000 chunks/sec
-- [ ] Unit tests with fixture Markdown files and asserted chunk counts/boundaries
+- [x] No chunk exceeds `max_chunk_size` tokens
+- [x] No chunk is smaller than 64 tokens (merged with adjacent if too small)
+- [x] API reference pages produce one chunk per function (verified against fixture)
+- [x] Tutorial pages produce one chunk per step
+- [x] Code blocks are never split mid-block by any strategy
+- [x] Context prefix is correctly injected into every chunk
+- [x] Chunking throughput ≥ 1,000 chunks/sec
+- [x] Unit tests with fixture Markdown files and asserted chunk counts/boundaries
 
 ---
 
@@ -508,10 +508,10 @@ Attach rich metadata to every chunk. This is what enables filtering during retri
 
 **Definition of done:**
 
-- [ ] Every field in `ChunkMetadata` is populated for a sample PostgreSQL page
-- [ ] `chunk_id` is deterministic: same inputs always produce same ID
-- [ ] `content_hash` changes when content changes, stays the same when only whitespace changes
-- [ ] Unit tests asserting determinism and completeness
+- [x] Every field in `ChunkMetadata` is populated for a sample PostgreSQL page
+- [x] `chunk_id` is deterministic: same inputs always produce same ID
+- [x] `content_hash` changes when content changes, stays the same when only whitespace changes
+- [x] Unit tests asserting determinism and completeness
 
 ---
 
@@ -547,12 +547,12 @@ Produce dense vector representations of every chunk. Pluggable across multiple p
 
 **Definition of done:**
 
-- [ ] Sentence Transformers provider embeds a batch of 64 chunks without error
-- [ ] OpenAI provider works with a valid API key
-- [ ] Embedding cache: second call for same content returns cached vector, no API call
-- [ ] Batching: 10,000 chunks are processed without OOM
-- [ ] Unit tests with mocked API responses
-- [ ] Integration test: embed 100 chunks end-to-end with Sentence Transformers
+- [x] Sentence Transformers provider embeds a batch of 64 chunks without error
+- [x] OpenAI provider works with a valid API key
+- [x] Embedding cache: second call for same content returns cached vector, no API call
+- [x] Batching: 10,000 chunks are processed without OOM
+- [x] Unit tests with mocked API responses
+- [x] Integration test: embed 100 chunks end-to-end with Sentence Transformers
 
 ---
 
@@ -583,14 +583,14 @@ Example: `docforge_postgresql_17_bge_base_en_v1_5`
 
 **Definition of done:**
 
-- [ ] `upsert` is idempotent: inserting the same chunk twice does not create duplicates
-- [ ] `search` returns correct top-k results ranked by cosine similarity
-- [ ] `delete(filters={"software": "postgresql", "version": "16"})` removes all matching chunks
-- [ ] ChromaDB backend works with zero configuration
-- [ ] FAISS backend persists to disk and reloads correctly
-- [ ] Qdrant backend connects to a local Qdrant instance
-- [ ] Metadata store records every pipeline run with accurate statistics
-- [ ] Integration test: upsert 1,000 chunks, search, verify top result is correct
+- [x] `upsert` is idempotent: inserting the same chunk twice does not create duplicates
+- [x] `search` returns correct top-k results ranked by cosine similarity
+- [x] `delete(filters={"software": "postgresql", "version": "16"})` removes all matching chunks
+- [x] ChromaDB backend works with zero configuration
+- [x] FAISS backend persists to disk and reloads correctly
+- [x] Qdrant backend connects to a local Qdrant instance
+- [x] Metadata store records every pipeline run with accurate statistics
+- [x] Integration test: upsert 1,000 chunks, search, verify top result is correct
 
 ---
 
@@ -641,11 +641,11 @@ discover(software)
 
 **Definition of done:**
 
-- [ ] `pipeline.run("postgresql")` indexes PostgreSQL v17 end-to-end without manual intervention
-- [ ] Pipeline can be interrupted and produces a consistent (partial) state
-- [ ] All events are emitted correctly and in order
-- [ ] `pipeline_runs` record is created with accurate stats on completion
-- [ ] Integration test: full pipeline on a small fixture site (< 20 pages) produces correct chunks in vector store
+- [x] `pipeline.run("postgresql")` indexes PostgreSQL v17 end-to-end without manual intervention
+- [x] Pipeline can be interrupted and produces a consistent (partial) state
+- [x] All events are emitted correctly and in order
+- [x] `pipeline_runs` record is created with accurate stats on completion
+- [x] Integration test: full pipeline on a small fixture site (< 20 pages) produces correct chunks in vector store
 
 ---
 
@@ -677,11 +677,11 @@ Enable `docforge update postgresql` to re-index only changed pages, not the enti
 
 **Definition of done:**
 
-- [ ] Running `update` on an unchanged corpus produces zero re-indexed pages
-- [ ] Modifying one page results in only that page's changed chunks being re-embedded
-- [ ] Sitemap-based detection skips fetching pages where `<lastmod>` is unchanged
-- [ ] ETag conditional requests result in 304 responses for unchanged pages
-- [ ] Integration test: index → mutate one fixture page → update → assert only that page was re-processed
+- [x] Running `update` on an unchanged corpus produces zero re-indexed pages (sitemap lastmod match)
+- [x] Modifying one page results in only that page's changed chunks being re-embedded
+- [x] Sitemap-based detection skips fetching pages where `<lastmod>` is unchanged
+- [x] ETag conditional requests result in 304 responses for unchanged pages
+- [x] Integration test: index → mutate one fixture page → update → assert only that page was re-processed
 
 ---
 

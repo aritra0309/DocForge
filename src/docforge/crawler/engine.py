@@ -240,18 +240,19 @@ class CrawlEngine:
             nonlocal fetched_count, active_workers
             async with active_lock:
                 active_workers += 1
+            consecutive_empty = 0
             try:
                 while True:
                     if await self._check_limit(limit, count_lock, fetched_count):
                         break
                     item = await self.pop_next()
                     if item is None:
-                        async with active_lock:
-                            others_running = active_workers > 1
-                        if others_running:
-                            await asyncio.sleep(0.01)
-                            continue
-                        break
+                        consecutive_empty += 1
+                        if consecutive_empty >= 3:
+                            break
+                        await asyncio.sleep(0.05)
+                        continue
+                    consecutive_empty = 0
                     url, depth = item
                     async with sem:
                         async with count_lock:

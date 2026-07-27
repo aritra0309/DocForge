@@ -79,6 +79,19 @@ class MetadataStore:
                     ON page_state(software, version);
                 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_software
                     ON pipeline_runs(software);
+
+                CREATE TABLE IF NOT EXISTS chunk_state (
+                    chunk_id TEXT PRIMARY KEY,
+                    page_url TEXT NOT NULL,
+                    content_hash TEXT NOT NULL,
+                    software TEXT NOT NULL,
+                    version TEXT NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_chunk_state_page
+                    ON chunk_state(page_url);
+                CREATE INDEX IF NOT EXISTS idx_chunk_state_sw_ver
+                    ON chunk_state(software, version);
             """)
             conn.commit()
 
@@ -132,6 +145,7 @@ class MetadataStore:
             conn.execute("DELETE FROM indexed_software WHERE software = ?", (software,))
             conn.execute("DELETE FROM indexed_versions WHERE software = ?", (software,))
             conn.execute("DELETE FROM page_state WHERE software = ?", (software,))
+            conn.execute("DELETE FROM chunk_state WHERE software = ?", (software,))
             conn.commit()
 
     # ------------------------------------------------------------------
@@ -195,6 +209,10 @@ class MetadataStore:
                 "DELETE FROM page_state WHERE software = ? AND version = ?",
                 (software, version),
             )
+            conn.execute(
+                "DELETE FROM chunk_state WHERE software = ? AND version = ?",
+                (software, version),
+            )
             conn.commit()
 
     # ------------------------------------------------------------------
@@ -247,6 +265,69 @@ class MetadataStore:
         with self._lock:
             conn = self._get_conn()
             conn.execute("DELETE FROM page_state WHERE url = ?", (url,))
+            conn.commit()
+
+    # ------------------------------------------------------------------
+    # chunk_state
+    # ------------------------------------------------------------------
+
+    def upsert_chunk_state(
+        self,
+        chunk_id: str,
+        page_url: str,
+        content_hash: str,
+        software: str,
+        version: str,
+    ) -> None:
+        with self._lock:
+            conn = self._get_conn()
+            conn.execute(
+                "INSERT OR REPLACE INTO chunk_state "
+                "(chunk_id, page_url, content_hash, software, version) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (chunk_id, page_url, content_hash, software, version),
+            )
+            conn.commit()
+
+    def upsert_chunk_states(self, chunks: list[Any]) -> None:
+        with self._lock:
+            conn = self._get_conn()
+            conn.executemany(
+                "INSERT OR REPLACE INTO chunk_state "
+                "(chunk_id, page_url, content_hash, software, version) "
+                "VALUES (?, ?, ?, ?, ?)",
+                [
+                    (
+                        chunk.metadata.chunk_id,
+                        chunk.metadata.url,
+                        chunk.metadata.content_hash,
+                        chunk.metadata.software,
+                        chunk.metadata.version,
+                    )
+                    for chunk in chunks
+                ],
+            )
+            conn.commit()
+
+    def list_chunk_states(self, page_url: str) -> list[dict[str, Any]]:
+        with self._lock:
+            conn = self._get_conn()
+            rows = conn.execute(
+                "SELECT chunk_id, content_hash FROM chunk_state WHERE page_url = ?",
+                (page_url,),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def delete_chunk_state_by_page(self, page_url: str) -> None:
+        with self._lock:
+            conn = self._get_conn()
+            conn.execute("DELETE FROM chunk_state WHERE page_url = ?", (page_url,))
+            conn.commit()
+
+    def delete_chunk_state(self, chunk_id: str) -> None:
+        with self._lock:
+            conn = self._get_conn()
+            conn.execute("DELETE FROM chunk_state WHERE chunk_id = ?", (chunk_id,))
             conn.commit()
 
     # ------------------------------------------------------------------
