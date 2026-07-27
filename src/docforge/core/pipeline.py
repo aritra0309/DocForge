@@ -282,7 +282,7 @@ class Pipeline:
             status=overall,
         )
 
-    async def _run_version(  # noqa: PLR0914
+    async def _run_version(  # noqa: PLR0914  # ruff: ignore[PLR0914]
         self,
         discovery_result: DiscoveryResult,
         version: str,
@@ -367,7 +367,7 @@ class Pipeline:
         vr.total_duration_ms = (time.monotonic() - t0) * 1000
         return vr
 
-    async def _run_version_incremental(  # noqa: PLR0914
+    async def _run_version_incremental(  # ruff: ignore[PLR0914]
         self,
         discovery_result: DiscoveryResult,
         version: str,
@@ -483,7 +483,7 @@ class Pipeline:
                 vr.extraction.pages_failed += 1
                 logger.warning("Failed to remove page %s: %s", url, exc)
 
-    async def _process_changed_pages(  # noqa: PLR0917
+    async def _process_changed_pages(  # ruff: ignore[PLR0917]
         self,
         fetch_results: list[Any],
         extractor: ExtractionEngine,
@@ -585,14 +585,14 @@ class Pipeline:
                 events.CRAWL_COMPLETED, software=software, version=version,
                 pages=len(fetch_results),
             )
-            return fetch_results, None  # noqa: TRY300
+            return fetch_results, None  # ruff: ignore[TRY300]
         except Exception as exc:
             err = f"Crawl failed: {exc}"
             vr.status = "failed"
             vr.error = err
             return None, err
 
-    async def _process_pages(  # noqa: PLR0917
+    async def _process_pages(  # ruff: ignore[PLR0917]
         self,
         fetch_results: list[Any],
         extractor: ExtractionEngine,

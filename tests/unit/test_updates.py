@@ -1,23 +1,17 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+import respx
 
-from docforge.core.models import (
-    Chunk,
-    ChunkMetadata,
-    ClassifiedPage,
-    DiscoveryResult,
-    ExtractedPage,
-    FetchResult,
-    PageType,
-)
+from docforge.core.models import Chunk, ChunkMetadata, DiscoveryResult, PageType
 from docforge.storage.metadata_store import MetadataStore
-from docforge.updates.detector import HTTP_NOT_MODIFIED, UpdateDetector, UpdateReport
-from docforge.updates.differ import ChunkDiffer, DiffReport
+from docforge.updates.detector import UpdateDetector, UpdateReport
+from docforge.updates.differ import ChunkDiffer
 
 
 def _make_chunk(
@@ -403,11 +397,40 @@ class TestUpdateDetector:
         assert len(report.changed_urls) >= 1
 
     @pytest.mark.asyncio
-    async def test_304_unchanged(self, tmp_path: Path) -> None:
+    @respx.mock
+    async def test_sitemap_changed_lastmod_confirmed_unchanged(self, tmp_path: Path) -> None:
+        """Sitemap lastmod mismatch is confirmed unchanged via conditional request."""
+        url = "https://example.com/docs/1.0/"
         store = MetadataStore(str(tmp_path / "meta.db"))
+        store.upsert_page_state(
+            url=url,
+            software="test", version="1.0",
+            content_hash="h1", etag='"abc"', last_modified="2025-01-01",
+        )
+
+        respx.get(url).respond(status_code=304)
+
+        detector = UpdateDetector()
+        discovery = _make_discovery_result(
+            base_url="https://example.com/docs/",
+            sitemap_url="https://example.com/sitemap.xml",
+        )
+
+        with patch("docforge.updates.detector.fetch_sitemap") as mock_fetch:
+            mock_fetch.return_value = [
+                _make_sitemap_url(url, "2025-02-01"),
+            ]
+            report = await detector.detect(discovery, "test", "1.0", store)
+
+        assert report.changed_urls == []
+        assert report.unchanged_urls == [url]
+        assert len(report.changed_fetch_results) == 0
+
+    @pytest.mark.asyncio
+    async def test_304_unchanged(self, tmp_path: Path) -> None:
         detector = UpdateDetector()
 
-        fetch_results, unchanged = await detector._fetch_with_conditionals(
+        fetch_results, _ = await detector._fetch_with_conditionals(
             ["https://example.com/page"],
             {"https://example.com/page": {"etag": '"abc"', "last_modified": "2025-01-01"}},
         )
@@ -428,10 +451,10 @@ class TestUpdateDetector:
         assert len(report.changed_urls) >= 1
 
 
+@dataclass
 class _MockSitemapUrl:
-    def __init__(self, loc: str, lastmod: str | None = None) -> None:
-        self.loc = loc
-        self.lastmod = lastmod
+    loc: str
+    lastmod: str | None = None
 
 
 def _make_sitemap_url(loc: str, lastmod: str | None) -> Any:

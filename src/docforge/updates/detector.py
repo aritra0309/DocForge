@@ -105,6 +105,7 @@ class UpdateDetector:
         }
 
         report = UpdateReport()
+        stored_for_fetch: dict[str, dict[str, Any]] = {}
 
         for url, sitemap_entry in current_by_url.items():
             stored = stored_by_url.pop(url, None)
@@ -113,22 +114,16 @@ class UpdateDetector:
                 continue
             sitemap_lastmod = sitemap_entry.lastmod
             stored_lastmod = stored.get("last_modified") or None
-            if sitemap_lastmod and stored_lastmod:
-                if sitemap_lastmod == stored_lastmod:
-                    report.unchanged_urls.append(url)
-                else:
-                    report.changed_urls.append(url)
-            elif sitemap_lastmod and not stored_lastmod:
-                report.changed_urls.append(url)
-            elif not sitemap_lastmod and stored_lastmod:
-                report.changed_urls.append(url)
-            else:
-                report.changed_urls.append(url)
+            if sitemap_lastmod and stored_lastmod and sitemap_lastmod == stored_lastmod:
+                report.unchanged_urls.append(url)
+                continue
+            report.changed_urls.append(url)
+            stored_for_fetch[url] = stored
 
         report.removed_urls = list(stored_by_url.keys())
 
         if report.new_urls or report.changed_urls:
-            await self._fetch_changed_and_new(report, discovery_result)
+            await self._fetch_changed_and_new(report, stored_for_fetch)
 
         return report
 
@@ -164,15 +159,10 @@ class UpdateDetector:
     async def _fetch_changed_and_new(
         self,
         report: UpdateReport,
-        discovery_result: DiscoveryResult,
+        stored_lookup: dict[str, dict[str, Any]],
     ) -> None:
         """Fetch changed and new URLs, confirming changes via conditional requests."""
-        stored_lookup: dict[str, dict[str, Any]] = {}
-
-        all_to_fetch: list[str] = []
-        for url in report.changed_urls + report.new_urls:
-            all_to_fetch.append(url)
-
+        all_to_fetch = report.changed_urls + report.new_urls
         if not all_to_fetch:
             return
 

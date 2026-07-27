@@ -232,46 +232,43 @@ class CrawlEngine:
         fetched_urls: set[str] = set()
         count_lock = asyncio.Lock()
         fetched_count = 0
-        active_workers = 0
-        active_lock = asyncio.Lock()
         sem = asyncio.Semaphore(self.parallelism)
 
         async def worker() -> None:
-            nonlocal fetched_count, active_workers
-            async with active_lock:
-                active_workers += 1
+            nonlocal fetched_count
             consecutive_empty = 0
-            try:
-                while True:
-                    if await self._check_limit(limit, count_lock, fetched_count):
-                        break
-                    item = await self.pop_next()
-                    if item is None:
-                        consecutive_empty += 1
-                        if consecutive_empty >= 3:
-                            break
-                        await asyncio.sleep(0.05)
+            while True:
+                if await self._check_limit(limit, count_lock, fetched_count):
+                    break
+                item = await self.pop_next()
+                if item is None:
+                    stats = await self.get_queue_stats()
+                    if stats.get("processing", 0) > 0:
+                        consecutive_empty = 0
+                        await asyncio.sleep(0.01)
                         continue
-                    consecutive_empty = 0
-                    url, depth = item
-                    async with sem:
+                    consecutive_empty += 1
+                    if consecutive_empty >= 3:
+                        break
+                    await asyncio.sleep(0.05)
+                    continue
+                consecutive_empty = 0
+                url, depth = item
+                async with sem:
+                    async with count_lock:
+                        if fetched_count >= limit:
+                            await self.mark_status(url, "pending")
+                            break
+                    result = await self._try_process_url(url, url_filter, depth)
+                    if result is None:
+                        continue
+                    if result.url not in fetched_urls:
                         async with count_lock:
-                            if fetched_count >= limit:
-                                await self.mark_status(url, "pending")
-                                break
-                        result = await self._try_process_url(url, url_filter, depth)
-                        if result is None:
-                            continue
-                        if result.url not in fetched_urls:
-                            async with count_lock:
-                                if fetched_count < limit:
-                                    fetched_urls.add(result.url)
-                                    fetched_results.append(result)
-                                    fetched_count += 1
-                        await self.mark_status(url, "completed")
-            finally:
-                async with active_lock:
-                    active_workers -= 1
+                            if fetched_count < limit:
+                                fetched_urls.add(result.url)
+                                fetched_results.append(result)
+                                fetched_count += 1
+                    await self.mark_status(url, "completed")
 
         workers = [asyncio.create_task(worker()) for _ in range(self.parallelism)]
         await asyncio.gather(*workers)

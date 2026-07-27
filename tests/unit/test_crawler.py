@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -343,7 +344,72 @@ async def test_crawl_skips_robots_disallowed() -> None:
 
 @pytest.mark.asyncio
 @respx.mock
-async def test_crawl_resume_checkpoint(tmp_path: pytest.TempPathFactory) -> None:
+async def test_crawl_workers_wait_for_inflight_processing(tmp_path: Path) -> None:
+    """Workers should wait while peers hold URLs in processing state."""
+    from unittest.mock import patch
+
+    from docforge.crawler.filters import URLFilter
+
+    config = CrawlerConfig(max_pages_per_version=10, rate_limit_rps=100, respect_robots_txt=False)
+    engine = CrawlEngine(config=config, queue_db_path=tmp_path / "queue.db")
+    engine.parallelism = 4
+
+    child_urls = [
+        "https://example.com/docs/child1.html",
+        "https://example.com/docs/child2.html",
+        "https://example.com/docs/child3.html",
+    ]
+    processing_waits = 0
+    real_sleep = asyncio.sleep
+
+    async def tracked_process(
+        url: str,
+        url_filter: URLFilter,
+        depth: int,
+    ) -> FetchResult:
+        if url == "https://example.com/docs/index.html":
+            await real_sleep(0.25)
+            for child in child_urls:
+                await engine.enqueue(child, depth=depth + 1)
+        return FetchResult(
+            url=url,
+            status_code=200,
+            html="<html><body>ok</body></html>",
+        )
+
+    async def sleep_wrapper(delay: float) -> None:
+        nonlocal processing_waits
+        if delay == 0.01:
+            processing_waits += 1
+        await real_sleep(delay)
+
+    respx.get("https://example.com/docs/index.html").respond(
+        status_code=200, text="<html><body>index</body></html>",
+    )
+    for child in child_urls:
+        respx.get(child).respond(status_code=200, text="<html><body>child</body></html>")
+
+    url_filter = URLFilter(base_url="https://example.com/docs/")
+    await engine._enqueue_seeds(["https://example.com/docs/index.html"])
+
+    with (
+        patch.object(engine, "_try_process_url", side_effect=tracked_process),
+        patch("docforge.crawler.engine.asyncio.sleep", side_effect=sleep_wrapper),
+    ):
+        results = await engine._run_crawl(url_filter, limit=10)
+
+    fetched_urls = {r.url for r in results}
+    assert fetched_urls == {
+        "https://example.com/docs/index.html",
+        *child_urls,
+    }
+    assert processing_waits > 0
+    engine.close()
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_crawl_resume_checkpoint(tmp_path: Path) -> None:
     """Crawl resumes from SQLite queue checkpoint after partial run."""
     page_root = """
     <html><body>
