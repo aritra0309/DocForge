@@ -261,6 +261,7 @@ class CrawlEngine:
                             break
                     result = await self._try_process_url(url, url_filter, depth)
                     if result is None:
+                        await self.mark_status(url, "failed")
                         continue
                     if result.url not in fetched_urls:
                         async with count_lock:
