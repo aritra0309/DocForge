@@ -29,7 +29,7 @@ class FakeEmbeddingProvider(EmbeddingProvider):
 @pytest.mark.integration
 @pytest.mark.asyncio
 @respx.mock
-async def test_pipeline_full_e2e(tmp_path: Path) -> None:  # noqa: PLR0915
+async def test_pipeline_full_e2e(tmp_path: Path) -> None:  # ruff: ignore[too-many-statements]
     index_html = (FIXTURES_DIR / "fixture_site_index.html").read_text(encoding="utf-8")
     page1_html = (FIXTURES_DIR / "fixture_site_page1.html").read_text(encoding="utf-8")
     page2_html = (FIXTURES_DIR / "fixture_site_page2.html").read_text(encoding="utf-8")
