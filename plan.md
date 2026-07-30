@@ -713,11 +713,11 @@ Support multiple documentation versions coexisting in the vector store without c
 
 **Definition of done:**
 
-- [ ] `docforge index postgresql --version 16` and `docforge index postgresql --version 17` both work; both versions queryable independently
-- [ ] `version="latest"` in search resolves to the latest indexed version
-- [ ] `delete_version("postgresql", "16")` removes all v16 data; v17 data intact
-- [ ] Version ordering: `"17" > "16" > "15"` is correct
-- [ ] Unit tests for all version manager methods
+- [x] `docforge index postgresql --version 16` and `docforge index postgresql --version 17` both work; both versions queryable independently
+- [x] `version="latest"` in search resolves to the latest indexed version
+- [x] `delete_version("postgresql", "16")` removes all v16 data; v17 data intact
+- [x] Version ordering: `"17" > "16" > "15"` is correct
+- [x] Unit tests for all version manager methods
 
 ---
 
