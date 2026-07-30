@@ -15,6 +15,8 @@ from docforge.core.models import (
     SearchResult,
 )
 
+_get_all_err = "get_all is not implemented by this backend"
+
 
 class DiscoveryProvider(ABC):
     """Discover a software project's documentation source from a name string.
@@ -221,6 +223,26 @@ class VectorStore(ABC):
         Returns:
             Total count of matching chunks.
         """
+
+    async def get_all(  # ruff: ignore[no-self-use]
+        self, filters: dict[str, Any] | None = None
+    ) -> list[EmbeddedChunk]:
+        """Retrieve all stored chunks matching the given metadata filters.
+
+        This is an optional utility method used by ``reembed`` mode.
+        The default implementation raises ``NotImplementedError``.
+
+        Args:
+            filters: Optional metadata key-value pairs to filter by.
+
+        Returns:
+            A list of all matching ``EmbeddedChunk`` objects.
+
+        Raises:
+            NotImplementedError: If the backend does not support bulk retrieval.
+        """
+        msg = _get_all_err
+        raise NotImplementedError(msg)
 
     @abstractmethod
     async def close(self) -> None:

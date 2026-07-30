@@ -136,6 +136,51 @@ class QdrantStore(VectorStore):
         count_val: int = result.count
         return count_val
 
+    async def get_all(self, filters: dict[str, Any] | None = None) -> list[EmbeddedChunk]:
+        from qdrant_client.http import models as m
+
+        qdrant_filter = self._build_filter(filters) if filters else None
+        scroll_result = self._client.scroll(
+            collection_name=self._collection_name,
+            scroll_filter=qdrant_filter,
+            limit=10000,
+            with_payload=True,
+            with_vectors=True,
+        )
+        points, _ = scroll_result
+        chunks: list[EmbeddedChunk] = []
+        for point in points:
+            p = point.payload or {}
+            meta = ChunkMetadata(
+                chunk_id=p.get("chunk_id", point.id),
+                parent_page_id=p.get("parent_page_id", ""),
+                software=p.get("software", ""),
+                version=p.get("version", ""),
+                url=p.get("url", ""),
+                title=p.get("title", ""),
+                page_type=p.get("page_type", "unknown"),
+                section_heading=p.get("section_heading", ""),
+                chunk_index=int(p.get("chunk_index", 0)),
+                total_chunks=int(p.get("total_chunks", 0)),
+                has_code=bool(p.get("has_code", False)),
+                code_languages=p.get("code_languages", []),
+                content_hash=p.get("content_hash", ""),
+                crawl_timestamp=self._parse_timestamp(p.get("crawl_timestamp", "")),
+                embedding_model=p.get("embedding_model", ""),
+                embedding_dimension=int(p.get("embedding_dimension", 0)),
+                breadcrumb=[],
+                docforge_version=p.get("docforge_version", ""),
+            )
+            vector: list[float] = point.vector or []
+            chunks.append(
+                EmbeddedChunk(
+                    content=p.get("content", ""),
+                    metadata=meta,
+                    vector=vector,
+                )
+            )
+        return chunks
+
     async def close(self) -> None:
         if self._client:
             self._client.close()

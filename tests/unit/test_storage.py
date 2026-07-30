@@ -15,6 +15,7 @@ from docforge.core.config import load_config
 from docforge.core.models import ChunkMetadata, EmbeddedChunk, PageType
 from docforge.storage.backends.chromadb import ChromaDBStore
 from docforge.storage.backends.faiss import FAISSStore
+from docforge.storage.backends.lancedb import LanceDBStore
 from docforge.storage.engine import StorageEngine, _collection_name
 from docforge.storage.metadata_store import MetadataStore
 
@@ -395,6 +396,105 @@ class TestFAISSStore:
     @pytest.mark.asyncio
     async def test_empty_count(self, store: FAISSStore) -> None:
         assert await store.count() == 0
+
+
+# ---------------------------------------------------------------------------
+# LanceDBStore
+# ---------------------------------------------------------------------------
+
+
+lancedb = pytest.importorskip("lancedb", reason="lancedb not installed")
+
+
+class TestLanceDBStore:
+    @pytest.fixture
+    async def store(self) -> AsyncGenerator[LanceDBStore, None]:
+        tmp_path = Path(tempfile.mkdtemp())
+        s = LanceDBStore()
+        await s.initialize(
+            {
+                "path": str(tmp_path),
+                "collection_name": "test_lancedb",
+                "dimension": 4,
+            }
+        )
+        yield s
+        await s.close()
+
+    @pytest.mark.asyncio
+    async def test_upsert_and_count(self, store: LanceDBStore) -> None:
+        chunks = [
+            _make_embedded_chunk("hello", [1.0, 0.0, 0.0, 0.0], chunk_index=0),
+            _make_embedded_chunk("world", [0.0, 1.0, 0.0, 0.0], chunk_index=1),
+        ]
+        await store.upsert(chunks)
+        assert await store.count() == 2
+
+    @pytest.mark.asyncio
+    async def test_upsert_idempotent(self, store: LanceDBStore) -> None:
+        cid = "lancedb_dedup"
+        chunk = _make_embedded_chunk("data", [0.1, 0.2, 0.3, 0.4], chunk_id=cid)
+        await store.upsert([chunk])
+        await store.upsert([chunk])
+        assert await store.count() == 1
+
+    @pytest.mark.asyncio
+    async def test_search_returns_top_k(self, store: LanceDBStore) -> None:
+        chunks = [
+            _make_embedded_chunk("cat", [1.0, 0.0, 0.0, 0.0], chunk_index=0),
+            _make_embedded_chunk("dog", [0.0, 1.0, 0.0, 0.0], chunk_index=1),
+            _make_embedded_chunk("bird", [0.0, 0.0, 1.0, 0.0], chunk_index=2),
+        ]
+        await store.upsert(chunks)
+        results = await store.search([1.0, 0.0, 0.0, 0.0], k=2)
+        assert len(results) == 2
+        assert results[0].metadata.software == "test"
+
+    @pytest.mark.asyncio
+    async def test_delete_with_filters(self, store: LanceDBStore) -> None:
+        chunks = [
+            _make_embedded_chunk("a", [0.1, 0.0, 0.0, 0.0], software="s1", chunk_index=0),
+            _make_embedded_chunk("b", [0.0, 0.1, 0.0, 0.0], software="s2", chunk_index=1),
+        ]
+        await store.upsert(chunks)
+        await store.delete({"software": "s1"})
+        assert await store.count() == 1
+
+    @pytest.mark.asyncio
+    async def test_search_with_filters(self, store: LanceDBStore) -> None:
+        chunks = [
+            _make_embedded_chunk("pg", [0.1, 0.0, 0.0, 0.0], software="postgresql", chunk_index=0),
+            _make_embedded_chunk("my", [0.0, 0.1, 0.0, 0.0], software="mysql", chunk_index=1),
+        ]
+        await store.upsert(chunks)
+        results = await store.search([0.1, 0.0, 0.0, 0.0], k=5, filters={"software": "postgresql"})
+        assert len(results) == 1
+        assert results[0].metadata.software == "postgresql"
+
+    @pytest.mark.asyncio
+    async def test_empty_count(self, store: LanceDBStore) -> None:
+        assert await store.count() == 0
+
+    @pytest.mark.asyncio
+    async def test_get_all_returns_all(self, store: LanceDBStore) -> None:
+        chunks = [
+            _make_embedded_chunk("a", [0.1, 0.0, 0.0, 0.0], software="s1", chunk_index=0),
+            _make_embedded_chunk("b", [0.0, 0.1, 0.0, 0.0], software="s2", chunk_index=1),
+        ]
+        await store.upsert(chunks)
+        all_chunks = await store.get_all()
+        assert len(all_chunks) == 2
+
+    @pytest.mark.asyncio
+    async def test_get_all_with_filters(self, store: LanceDBStore) -> None:
+        chunks = [
+            _make_embedded_chunk("a", [0.1, 0.0, 0.0, 0.0], software="s1", chunk_index=0),
+            _make_embedded_chunk("b", [0.0, 0.1, 0.0, 0.0], software="s2", chunk_index=1),
+        ]
+        await store.upsert(chunks)
+        filtered = await store.get_all(filters={"software": "s1"})
+        assert len(filtered) == 1
+        assert filtered[0].metadata.software == "s1"
 
 
 # ---------------------------------------------------------------------------

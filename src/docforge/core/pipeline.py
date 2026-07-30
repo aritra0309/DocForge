@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import logging
 import time
 from dataclasses import dataclass, field
@@ -11,12 +12,14 @@ from docforge.classifier.engine import ClassificationEngine
 from docforge.core import events
 from docforge.core.config import DocForgeConfig, load_config
 from docforge.core.interfaces import EmbeddingProvider
-from docforge.core.models import Chunk, DiscoveryResult
+from docforge.core.models import Chunk, DiscoveryResult, EmbeddedChunk
 from docforge.crawler.engine import CrawlEngine
 from docforge.discovery.engine import DiscoveryEngine
 from docforge.discovery.registry import load_registry
 from docforge.embeddings.cache import EmbeddingCache
 from docforge.embeddings.engine import EmbeddingEngine
+from docforge.embeddings.providers.bge import BgeProvider
+from docforge.embeddings.providers.jina import JinaEmbeddingProvider
 from docforge.embeddings.providers.openai import OpenAIEmbeddingProvider
 from docforge.embeddings.providers.sentence_transformers import (
     SentenceTransformersProvider,
@@ -75,6 +78,10 @@ def _create_embedding_provider(config: DocForgeConfig) -> EmbeddingProvider:
         return OpenAIEmbeddingProvider(model_name=model_name)
     if provider_name == "voyage":
         return VoyageEmbeddingProvider(model_name=model_name)
+    if provider_name == "bge":
+        return BgeProvider(model_name=model_name)
+    if provider_name == "jina":
+        return JinaEmbeddingProvider(model_name=model_name)
     msg = f"Unknown embedding provider: {provider_name!r}"
     raise ValueError(msg)
 
@@ -166,7 +173,7 @@ class Pipeline:
         error: str | None = None
         result: PipelineResult | None = None
         try:
-            result = await self._run_with_mode(software, version, mode)
+            result = await self._run_with_mode(software, version, mode, kwargs)
         except NotImplementedError:
             raise
         except Exception as exc:
@@ -193,14 +200,17 @@ class Pipeline:
         software: str,
         version: str | None,
         mode: str,
+        kwargs: dict[str, Any] | None = None,
     ) -> PipelineResult:
         if mode == "full":
             return await self._run_full(software, version)
         if mode == "incremental":
             return await self._run_incremental(software, version)
         if mode == "reembed":
-            msg = "Re-embed mode requires Task 17 — not yet implemented"
-            raise NotImplementedError(msg)
+            kw = kwargs or {}
+            old_model = kw.get("old_model", self.config.embeddings.model)
+            new_model = kw.get("new_model", self.config.embeddings.model)
+            return await self._run_reembed(software, version, old_model, new_model)
         msg = f"Unknown pipeline mode: {mode!r}"
         raise ValueError(msg)
 
@@ -533,6 +543,197 @@ class Pipeline:
         self.crawler.close()
         await storage.close()
         vr.total_duration_ms = (time.monotonic() - t0) * 1000
+        return vr
+
+    async def _run_reembed(
+        self,
+        software: str,
+        version: str | None,
+        old_model: str,
+        new_model: str,
+    ) -> PipelineResult:
+        await self.events.emit(events.DISCOVERY_STARTED, software=software)
+        discovery_result = await self.discovery.discover(software)
+        await self.events.emit(
+            events.DISCOVERY_COMPLETED,
+            software=discovery_result.software,
+            display_name=discovery_result.display_name,
+            versions=discovery_result.versions,
+        )
+        versions_to_index: list[str] = []
+        if version:
+            if version not in discovery_result.versions:
+                if version == "latest":
+                    versions_to_index = [discovery_result.latest_version]
+                else:
+                    versions_to_index = [version]
+            else:
+                versions_to_index = [version]
+        else:
+            versions_to_index = [discovery_result.latest_version]
+
+        version_results: list[PipelineVersionResult] = []
+        for ver in versions_to_index:
+            vr = await self._run_reembed_version(discovery_result, ver, old_model, new_model)
+            version_results.append(vr)
+
+        any_failed = any(vr.status == "failed" for vr in version_results)
+        all_failed = all(vr.status == "failed" for vr in version_results)
+        overall = "failed" if all_failed else ("partial" if any_failed else "completed")
+        return PipelineResult(
+            software=discovery_result.software,
+            versions=version_results,
+            status=overall,
+        )
+
+    async def _run_reembed_version(  # ruff: ignore[too-many-locals, too-many-return-statements, too-many-statements]
+        self,
+        discovery_result: DiscoveryResult,
+        version: str,
+        old_model: str,
+        new_model: str,
+    ) -> PipelineVersionResult:
+        t0 = time.monotonic()
+        software = discovery_result.software
+        vr = PipelineVersionResult(software=software, version=version)
+
+        await self.events.emit(events.REEMBED_STARTED, software=software, version=version)
+
+        old_provider = self.embedding_provider
+        new_config = copy.deepcopy(self.config)
+        new_config.embeddings.model = new_model
+        new_provider = _create_embedding_provider(new_config)
+
+        old_storage = StorageEngine(self.config, software=software, version=version)
+        try:
+            await old_storage.initialize(
+                dimension=old_provider.dimension,
+                model_name=old_model,
+            )
+        except Exception as exc:
+            vr.status = "failed"
+            vr.error = f"Old storage initialization failed: {exc}"
+            vr.total_duration_ms = (time.monotonic() - t0) * 1000
+            return vr
+
+        metadata_store = old_storage.metadata_store
+        run_id = metadata_store.create_run(software=software, version=version, mode="reembed")
+        metadata_store.upsert_software(
+            software=software, display_name=discovery_result.display_name
+        )
+
+        old_chunks: list[EmbeddedChunk] = []
+        try:
+            old_chunks = await old_storage.store.get_all(
+                filters={"software": software, "version": version}
+            )
+        except NotImplementedError:
+            vr.status = "failed"
+            vr.error = "Reembed not supported by this storage backend (get_all not implemented)"
+            metadata_store.complete_run(run_id, status="failed", error_log=vr.error)
+            await old_storage.close()
+            vr.total_duration_ms = (time.monotonic() - t0) * 1000
+            return vr
+        except Exception as exc:
+            vr.status = "failed"
+            vr.error = f"Failed to load chunks from old storage: {exc}"
+            metadata_store.complete_run(run_id, status="failed", error_log=vr.error)
+            await old_storage.close()
+            vr.total_duration_ms = (time.monotonic() - t0) * 1000
+            return vr
+
+        await old_storage.close()
+
+        if not old_chunks:
+            metadata_store.complete_run(
+                run_id,
+                status="completed",
+                page_count=0,
+                chunk_count=0,
+                embedding_model=new_provider.model_name,
+            )
+            await self.events.emit(
+                events.REEMBED_COMPLETED, software=software, version=version, chunks=0
+            )
+            vr.total_duration_ms = (time.monotonic() - t0) * 1000
+            return vr
+
+        texts = [c.content for c in old_chunks]
+
+        new_embedding_engine = EmbeddingEngine(
+            provider=new_provider,
+            batch_size=self.config.embeddings.batch_size,
+        )
+        embed_t0 = time.monotonic()
+        try:
+            reembedded = [
+                Chunk(content=t, metadata=c.metadata)
+                for t, c in zip(texts, old_chunks, strict=True)
+            ]
+            new_vectors = await new_embedding_engine.embed(reembedded)
+        except Exception as exc:
+            vr.status = "failed"
+            vr.error = f"Re-embedding failed: {exc}"
+            metadata_store.complete_run(run_id, status="failed", error_log=vr.error)
+            vr.total_duration_ms = (time.monotonic() - t0) * 1000
+            return vr
+        vr.embedding.duration_ms = (time.monotonic() - embed_t0) * 1000
+        vr.embedding.chunks_produced = len(new_vectors)
+
+        new_storage = StorageEngine(new_config, software=software, version=version)
+        try:
+            await new_storage.initialize(
+                dimension=new_provider.dimension,
+                model_name=new_provider.model_name,
+            )
+        except Exception as exc:
+            vr.status = "failed"
+            vr.error = f"New storage initialization failed: {exc}"
+            metadata_store.complete_run(run_id, status="failed", error_log=vr.error)
+            await new_embedding_engine.close()
+            vr.total_duration_ms = (time.monotonic() - t0) * 1000
+            return vr
+
+        store_t0 = time.monotonic()
+        try:
+            await new_storage.upsert(new_vectors)
+        except Exception as exc:
+            vr.status = "failed"
+            vr.error = f"Storage upsert failed: {exc}"
+            metadata_store.complete_run(run_id, status="failed", error_log=vr.error)
+            await new_embedding_engine.close()
+            await new_storage.close()
+            vr.total_duration_ms = (time.monotonic() - t0) * 1000
+            return vr
+        vr.storage.duration_ms = (time.monotonic() - store_t0) * 1000
+        vr.storage.chunks_produced = len(new_vectors)
+
+        metadata_store.complete_run(
+            run_id,
+            status="completed",
+            page_count=len(old_chunks),
+            chunk_count=len(new_vectors),
+            embedding_model=new_provider.model_name,
+        )
+        metadata_store.upsert_version(
+            software=software,
+            version=version,
+            page_count=len(old_chunks),
+            chunk_count=len(new_vectors),
+            embedding_model=new_provider.model_name,
+            embedding_dimension=new_provider.dimension,
+        )
+
+        await new_embedding_engine.close()
+        await new_storage.close()
+        vr.total_duration_ms = (time.monotonic() - t0) * 1000
+
+        await self.events.emit(
+            events.REEMBED_COMPLETED,
+            software=software,
+            version=version,
+            chunks=len(new_vectors),
+        )
         return vr
 
     async def _delete_removed_pages(

@@ -90,6 +90,9 @@ openai = [
 qdrant = [
     "qdrant-client>=1.10,<2",
 ]
+jina = [
+    "jina>=3.28,<4",
+]
 lancedb = [
     "lancedb>=0.12,<1",
 ]
@@ -188,7 +191,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["lxml", "lxml.*", "markdownify", "readability", "voyageai", "openai"]
+module = ["lxml", "lxml.*", "markdownify", "readability", "voyageai", "openai", "jina", "lancedb", "weaviate", "weaviate.*", "pyarrow"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

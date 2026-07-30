@@ -91,6 +91,39 @@ class ChromaDBStore(VectorStore):
         total_count: int = self._collection.count()
         return total_count
 
+    async def get_all(self, filters: dict[str, Any] | None = None) -> list[EmbeddedChunk]:
+        where = self._metadata_filters_to_where(filters) if filters else None
+        result = self._collection.get(where=where, include=["embeddings", "documents", "metadatas"])
+        if not result or not result["ids"]:
+            return []
+        chunks: list[EmbeddedChunk] = []
+        for i, cid in enumerate(result["ids"]):
+            meta_dict = (result["metadatas"] or [{}] * len(result["ids"]))[i] or {}
+            doc = (result["documents"] or [""] * len(result["ids"]))[i] or ""
+            emb = (result["embeddings"] or [[]] * len(result["ids"]))[i] or []
+            meta = ChunkMetadata(
+                chunk_id=cid,
+                parent_page_id=meta_dict.get("parent_page_id", ""),
+                software=meta_dict.get("software", ""),
+                version=meta_dict.get("version", ""),
+                url=meta_dict.get("url", ""),
+                title=meta_dict.get("title", ""),
+                page_type=meta_dict.get("page_type", "unknown"),
+                section_heading=meta_dict.get("section_heading", ""),
+                chunk_index=int(meta_dict.get("chunk_index", 0)),
+                total_chunks=int(meta_dict.get("total_chunks", 0)),
+                has_code=bool(meta_dict.get("has_code", False)),
+                code_languages=[],
+                content_hash=meta_dict.get("content_hash", ""),
+                crawl_timestamp=self._parse_timestamp(meta_dict.get("crawl_timestamp", "")),
+                embedding_model=meta_dict.get("embedding_model", ""),
+                embedding_dimension=int(meta_dict.get("embedding_dimension", 0)),
+                breadcrumb=[],
+                docforge_version="",
+            )
+            chunks.append(EmbeddedChunk(content=doc, metadata=meta, vector=emb))
+        return chunks
+
     async def close(self) -> None:
         pass
 

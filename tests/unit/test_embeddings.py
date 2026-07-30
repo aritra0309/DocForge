@@ -15,6 +15,8 @@ from docforge.core.interfaces import EmbeddingProvider
 from docforge.core.models import Chunk, ChunkMetadata, EmbeddedChunk, PageType
 from docforge.embeddings.cache import EmbeddingCache
 from docforge.embeddings.engine import EmbeddingEngine, EmbeddingProgress, TokenBucket
+from docforge.embeddings.providers.bge import BgeProvider
+from docforge.embeddings.providers.jina import JinaEmbeddingProvider
 from docforge.embeddings.providers.openai import OpenAIEmbeddingProvider
 from docforge.embeddings.providers.sentence_transformers import (
     SentenceTransformersProvider,
@@ -231,6 +233,83 @@ class TestVoyageEmbeddingProvider:
         result = await provider.embed_batch(["hello", "world"])
         assert len(result) == 2
         assert result[0] == [0.1, 0.2]
+
+
+# ---------------------------------------------------------------------------
+# BgeProvider
+# ---------------------------------------------------------------------------
+
+
+class TestBgeProvider:
+    def test_default_properties(self) -> None:
+        provider = BgeProvider()
+        assert provider.model_name == "BAAI/bge-base-en-v1.5"
+        assert provider.dimension == 768
+        assert provider.max_tokens == 512
+
+    def test_small_preset(self) -> None:
+        provider = BgeProvider(model_name="bge-small-en")
+        assert provider.model_name == "BAAI/bge-small-en-v1.5"
+        assert provider.dimension == 384
+
+    def test_large_preset(self) -> None:
+        provider = BgeProvider(model_name="bge-large-en")
+        assert provider.model_name == "BAAI/bge-large-en-v1.5"
+        assert provider.dimension == 1024
+
+    def test_custom_model(self) -> None:
+        provider = BgeProvider(model_name="BAAI/bge-small-en-v1.5")
+        assert provider.model_name == "BAAI/bge-small-en-v1.5"
+        assert provider.dimension == 384
+
+    @pytest.mark.asyncio
+    async def test_embed_batch_mocked(self) -> None:
+        provider = BgeProvider()
+        mock_model = MagicMock()
+        mock_model.encode.return_value = numpy.array([[0.1, 0.2], [0.3, 0.4]])
+        provider._model = mock_model
+        result = await provider.embed_batch(["hello", "world"])
+        assert len(result) == 2
+        assert len(result[0]) == 2
+        mock_model.encode.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# JinaEmbeddingProvider
+# ---------------------------------------------------------------------------
+
+
+class TestJinaEmbeddingProvider:
+    def test_default_properties(self) -> None:
+        provider = JinaEmbeddingProvider(api_key="jn-test")
+        assert provider.model_name == "jina-embeddings-v3"
+        assert provider.dimension == 1024
+        assert provider.max_tokens == 8192
+
+    def test_custom_model(self) -> None:
+        provider = JinaEmbeddingProvider(model_name="jina-embeddings-v2-base-en", api_key="jn-test")
+        assert provider.model_name == "jina-embeddings-v2-base-en"
+        assert provider.dimension == 768
+
+    @pytest.mark.asyncio
+    async def test_embed_batch_mocked(self) -> None:
+        provider = JinaEmbeddingProvider(api_key="jn-test")
+        mock_client = MagicMock()
+        mock_client.__class__.__name__ = "Clients"
+        provider._client = mock_client
+
+        mock_response = MagicMock()
+        mock_response.data = [
+            MagicMock(index=0, embedding=[0.1, 0.2]),
+            MagicMock(index=1, embedding=[0.3, 0.4]),
+        ]
+        provider._run_embedding = AsyncMock(return_value=mock_response)  # type: ignore[method-assign]
+
+        result = await provider.embed_batch(["hello", "world"])
+
+        assert len(result) == 2
+        assert result[0] == [0.1, 0.2]
+        provider._run_embedding.assert_awaited_once_with(mock_client, ["hello", "world"])
 
 
 # ---------------------------------------------------------------------------

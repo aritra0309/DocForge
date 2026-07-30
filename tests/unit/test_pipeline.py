@@ -13,6 +13,7 @@ from docforge.core.models import (
     ChunkMetadata,
     ClassifiedPage,
     DiscoveryResult,
+    EmbeddedChunk,
     ExtractedPage,
     FetchResult,
     PageType,
@@ -326,13 +327,62 @@ class TestPipeline:
         await pipeline.close()
 
     @pytest.mark.asyncio
-    async def test_run_reembed_raises_not_implemented(self, tmp_path: Any) -> None:
+    @patch("docforge.core.pipeline.EmbeddingEngine")
+    @patch("docforge.core.pipeline._create_embedding_provider")
+    @patch("docforge.core.pipeline.StorageEngine")
+    async def test_run_reembed_mode(
+        self,
+        mock_store_cls: MagicMock,
+        mock_create_provider: MagicMock,
+        mock_embed_engine_cls: MagicMock,
+        tmp_path: Any,
+    ) -> None:
         config = _config(tmp_path)
+        discovery = _make_discovery_result()
+
+        mock_discovery = AsyncMock()
+        mock_discovery.discover.return_value = discovery
+
+        mock_old_store = AsyncMock()
+        mock_old_store.metadata_store = MagicMock()
+
+        embedded_chunk = EmbeddedChunk(
+            content="test content",
+            metadata=_make_chunk().metadata,
+            vector=[0.1, 0.2, 0.3, 0.4],
+        )
+        mock_old_store.store.get_all.return_value = [embedded_chunk]
+
+        mock_new_store = AsyncMock()
+        mock_new_store.metadata_store = MagicMock()
+
+        mock_store_cls.side_effect = [mock_old_store, mock_new_store]
+
+        mock_provider = MagicMock()
+        mock_provider.model_name = "test-model"
+        mock_provider.dimension = 4
+        mock_create_provider.return_value = mock_provider
+
+        mock_embed_engine = AsyncMock()
+        mock_embed_engine.embed.return_value = [
+            EmbeddedChunk(
+                content="re-embedded content",
+                metadata=_make_chunk().metadata,
+                vector=[0.5, 0.6, 0.7, 0.8],
+            )
+        ]
+        mock_embed_engine_cls.return_value = mock_embed_engine
+
         pipeline = Pipeline(config=config)
+        pipeline._discovery = mock_discovery
 
-        with pytest.raises(NotImplementedError, match="Task 17"):
-            await pipeline.run("test", mode="reembed")
+        result = await pipeline.run(
+            "test", mode="reembed", old_model="test-model", new_model="new-model"
+        )
 
+        assert result.status == "completed"
+        mock_old_store.store.get_all.assert_awaited_once()
+        mock_new_store.upsert.assert_awaited_once()
         await pipeline.close()
 
     @pytest.mark.asyncio

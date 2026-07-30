@@ -34,6 +34,8 @@ UPDATE_PAGE_REMOVED = "update.page.removed"
 UPDATE_PAGE_SKIPPED = "update.page.skipped"
 UPDATE_PAGE_REINDEXED = "update.page.reindexed"
 UPDATE_CHUNK_DIFFED = "update.chunk.diffed"
+REEMBED_STARTED = "reembed.started"
+REEMBED_COMPLETED = "reembed.completed"
 
 
 @dataclass

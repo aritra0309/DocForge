@@ -10,13 +10,17 @@ from docforge.core.interfaces import VectorStore
 from docforge.core.models import EmbeddedChunk, SearchResult
 from docforge.storage.backends.chromadb import ChromaDBStore
 from docforge.storage.backends.faiss import FAISSStore
+from docforge.storage.backends.lancedb import LanceDBStore
 from docforge.storage.backends.qdrant import QdrantStore
+from docforge.storage.backends.weaviate import WeaviateStore
 from docforge.storage.metadata_store import MetadataStore
 
 BACKENDS: dict[str, type[VectorStore]] = {
     "chromadb": ChromaDBStore,
     "faiss": FAISSStore,
+    "lancedb": LanceDBStore,
     "qdrant": QdrantStore,
+    "weaviate": WeaviateStore,
 }
 
 

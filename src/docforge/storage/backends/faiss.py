@@ -190,6 +190,34 @@ class FAISSStore(VectorStore):
         ntotal: int = self._index.ntotal if self._index else 0
         return ntotal
 
+    async def get_all(self, filters: dict[str, Any] | None = None) -> list[EmbeddedChunk]:
+        chunks: list[EmbeddedChunk] = []
+        for chunk_id_str, meta_dict in self._metadata.items():
+            if filters and not self._matches_filters(meta_dict, filters):
+                continue
+            doc = self._documents.get(chunk_id_str, "")
+            meta = ChunkMetadata(
+                chunk_id=meta_dict["chunk_id"],
+                parent_page_id=meta_dict["parent_page_id"],
+                software=meta_dict["software"],
+                version=meta_dict["version"],
+                url=meta_dict["url"],
+                title=meta_dict["title"],
+                page_type=meta_dict["page_type"],
+                section_heading=meta_dict["section_heading"],
+                chunk_index=meta_dict["chunk_index"],
+                total_chunks=meta_dict["total_chunks"],
+                has_code=meta_dict["has_code"],
+                code_languages=meta_dict.get("code_languages", []),
+                content_hash=meta_dict["content_hash"],
+                crawl_timestamp=self._parse_timestamp(meta_dict["crawl_timestamp"]),
+                embedding_model=meta_dict["embedding_model"],
+                embedding_dimension=meta_dict["embedding_dimension"],
+                docforge_version=meta_dict.get("docforge_version", ""),
+            )
+            chunks.append(EmbeddedChunk(content=doc, metadata=meta, vector=[]))
+        return chunks
+
     async def close(self) -> None:
         self._persist()
 
