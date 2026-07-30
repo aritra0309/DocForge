@@ -8,15 +8,20 @@
 
 ## Status
 
-Phase 1 of the [implementation plan](plan.md) is complete — the following are built and tested:
+Phases 1–4 of the [implementation plan](plan.md) are complete — Tasks 1–17 are built and tested:
 
-- ✅ **Project scaffold** — pyproject.toml, lint/format/typecheck, CI
-- ✅ **Core data models** — Pydantic v2 models for all pipeline stages
-- ✅ **Plugin interfaces** — ABCs for discovery, crawling, extraction, chunking, embeddings, storage
-- ✅ **Configuration system** — TOML files + env vars + Python overrides, 5-layer priority
-- ✅ **Software registry** — 7 curated entries (PostgreSQL, MySQL, MongoDB, FastAPI, React, Kubernetes, Redis)
+| Phase | Tasks | Status |
+|-------|-------|--------|
+| 1 — Foundation | 1–5 | ✅ Project scaffold, data models, interfaces, config, software registry |
+| 2 — Pipeline Core | 6–11 | ✅ Discovery, crawling, extraction, classification, chunking, metadata generation |
+| 3 — Intelligence | 12–14 | ✅ Embeddings (3 providers), storage (3 backends), end-to-end pipeline orchestrator |
+| 4 — Incremental & Providers | 15–17 | ✅ Incremental updates, version management, 5 embedding providers + 5 vector backends |
 
-Next up: discovery engine, crawling, extraction, and the full indexing pipeline.
+**Embedding providers:** Sentence Transformers, OpenAI, Voyage, BGE (with presets), Jina  
+**Vector backends:** ChromaDB, FAISS, Qdrant, LanceDB, Weaviate  
+**Pipeline modes:** `full`, `incremental`, `reembed`
+
+Next up: Phase 5 — CLI & Python API, full test suite, documentation, and v0.1.0 release.
 
 ## Quickstart
 

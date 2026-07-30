@@ -748,10 +748,10 @@ Expand the provider ecosystem to give users real choice of embedding models and 
 
 **Definition of done:**
 
-- [ ] All 5 embedding providers satisfy the `EmbeddingProvider` interface and pass the shared provider test suite
-- [ ] All 5 vector backends satisfy the `VectorStore` interface and pass the shared backend test suite
-- [ ] `docforge reembed postgresql --model "openai/text-embedding-3-small"` works end-to-end
-- [ ] Provider is selected by name in config: `provider = "jina"` works without code changes
+- [x] All 5 embedding providers satisfy the `EmbeddingProvider` interface and pass the shared provider test suite
+- [x] All 5 vector backends satisfy the `VectorStore` interface and pass the shared backend test suite
+- [x] `docforge reembed postgresql --model "openai/text-embedding-3-small"` works end-to-end
+- [x] Provider is selected by name in config: `provider = "jina"` works without code changes
 
 ---
 
