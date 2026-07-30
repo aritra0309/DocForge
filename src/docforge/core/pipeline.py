@@ -282,7 +282,7 @@ class Pipeline:
             status=overall,
         )
 
-    async def _run_version(  # ruff: ignore[PLR0914]
+    async def _run_version(  # noqa: PLR0914
         self,
         discovery_result: DiscoveryResult,
         version: str,
@@ -316,6 +316,8 @@ class Pipeline:
             vr.total_duration_ms = (time.monotonic() - t0) * 1000
             return vr
 
+        assert fetch_results is not None
+
         all_chunks = await self._process_pages(
             fetch_results, extractor, classifier, chunker, metadata_gen,
             metadata_store, software, version, vr,
@@ -348,6 +350,8 @@ class Pipeline:
             vr.total_duration_ms = (time.monotonic() - t0) * 1000
             return vr
 
+        assert embedded is not None
+
         store_err = await self._store_chunks(
             embedded, storage, software, version, vr,
         )
@@ -367,7 +371,7 @@ class Pipeline:
         vr.total_duration_ms = (time.monotonic() - t0) * 1000
         return vr
 
-    async def _run_version_incremental(  # ruff: ignore[PLR0914]
+    async def _run_version_incremental(  # noqa: PLR0914
         self,
         discovery_result: DiscoveryResult,
         version: str,
@@ -446,6 +450,8 @@ class Pipeline:
             vr.total_duration_ms = (time.monotonic() - t0) * 1000
             return vr
 
+        assert embedded is not None
+
         store_err = await self._store_chunks(
             embedded, storage, software, version, vr,
         )
@@ -483,7 +489,7 @@ class Pipeline:
                 vr.extraction.pages_failed += 1
                 logger.warning("Failed to remove page %s: %s", url, exc)
 
-    async def _process_changed_pages(  # ruff: ignore[PLR0917]
+    async def _process_changed_pages(  # noqa: PLR0917
         self,
         fetch_results: list[Any],
         extractor: ExtractionEngine,
@@ -508,7 +514,7 @@ class Pipeline:
                 logger.warning("Failed to process changed page %s: %s", fetch_result.url, exc)
         return all_chunks
 
-    async def _process_single_changed_page(  # ruff: ignore[PLR0917]
+    async def _process_single_changed_page(  # noqa: PLR0917
         self,
         fetch_result: Any,
         extractor: ExtractionEngine,
@@ -611,7 +617,7 @@ class Pipeline:
         )
         return fetch_results, None
 
-    async def _process_pages(  # ruff: ignore[PLR0917]
+    async def _process_pages(  # noqa: PLR0917
         self,
         fetch_results: list[Any],
         extractor: ExtractionEngine,
@@ -638,7 +644,7 @@ class Pipeline:
         vr.extraction.duration_ms = (time.monotonic() - extract_t0) * 1000
         return all_chunks
 
-    async def _process_single_page(  # ruff: ignore[PLR0917]
+    async def _process_single_page(  # noqa: PLR0917
         self,
         fetch_result: Any,
         extractor: ExtractionEngine,
@@ -738,7 +744,7 @@ class Pipeline:
         )
         return None
 
-    async def _finalize_version(  # ruff: ignore[PLR0917]
+    async def _finalize_version(  # noqa: PLR0917
         self,
         metadata_store: Any,
         run_id: int,
