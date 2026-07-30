@@ -305,7 +305,8 @@ class Pipeline:
         metadata_store = storage.metadata_store
         run_id = metadata_store.create_run(software=software, version=version, mode="full")
         metadata_store.upsert_software(
-            software=software, display_name=discovery_result.display_name,
+            software=software,
+            display_name=discovery_result.display_name,
         )
 
         fetch_results, err = await self._crawl_version(discovery_result, version, vr)
@@ -319,20 +320,31 @@ class Pipeline:
         assert fetch_results is not None
 
         all_chunks = await self._process_pages(
-            fetch_results, extractor, classifier, chunker, metadata_gen,
-            metadata_store, software, version, vr,
+            fetch_results,
+            extractor,
+            classifier,
+            chunker,
+            metadata_gen,
+            metadata_store,
+            software,
+            version,
+            vr,
         )
         vr.chunking.chunks_produced = len(all_chunks)
 
         if not all_chunks:
             metadata_store.complete_run(
-                run_id, status="completed",
-                page_count=len(fetch_results), chunk_count=0,
+                run_id,
+                status="completed",
+                page_count=len(fetch_results),
+                chunk_count=0,
                 embedding_model=provider.model_name,
             )
             metadata_store.upsert_version(
-                software=software, version=version,
-                page_count=len(fetch_results), chunk_count=0,
+                software=software,
+                version=version,
+                page_count=len(fetch_results),
+                chunk_count=0,
                 embedding_model=provider.model_name,
                 embedding_dimension=provider.dimension,
             )
@@ -341,7 +353,11 @@ class Pipeline:
             return vr
 
         embedded, embed_err = await self._embed_chunks(
-            all_chunks, provider, software, version, vr,
+            all_chunks,
+            provider,
+            software,
+            version,
+            vr,
         )
         if embed_err:
             metadata_store.complete_run(run_id, status="failed", error_log=embed_err)
@@ -353,7 +369,11 @@ class Pipeline:
         assert embedded is not None
 
         store_err = await self._store_chunks(
-            embedded, storage, software, version, vr,
+            embedded,
+            storage,
+            software,
+            version,
+            vr,
         )
         if store_err:
             metadata_store.complete_run(run_id, status="failed", error_log=store_err)
@@ -363,8 +383,14 @@ class Pipeline:
             return vr
 
         await self._finalize_version(
-            metadata_store, run_id, fetch_results, embedded,
-            provider, software, version, vr,
+            metadata_store,
+            run_id,
+            fetch_results,
+            embedded,
+            provider,
+            software,
+            version,
+            vr,
         )
         self.crawler.close()
         await storage.close()
@@ -393,46 +419,70 @@ class Pipeline:
 
         metadata_store = storage.metadata_store
         run_id = metadata_store.create_run(
-            software=software, version=version, mode="incremental",
+            software=software,
+            version=version,
+            mode="incremental",
         )
         metadata_store.upsert_software(
-            software=software, display_name=discovery_result.display_name,
+            software=software,
+            display_name=discovery_result.display_name,
         )
 
         detector = UpdateDetector(config=self.config)
         report = await detector.detect(discovery_result, software, version, metadata_store)
         await self.events.emit(
             events.UPDATE_COMPLETED,
-            software=software, version=version,
-            new=len(report.new_urls), changed=len(report.changed_urls),
-            removed=len(report.removed_urls), unchanged=len(report.unchanged_urls),
+            software=software,
+            version=version,
+            new=len(report.new_urls),
+            changed=len(report.changed_urls),
+            removed=len(report.removed_urls),
+            unchanged=len(report.unchanged_urls),
         )
 
         await self._delete_removed_pages(report, storage, metadata_store, vr)
 
         new_page_chunks = await self._process_pages(
-            report.new_fetch_results, extractor, classifier, chunker,
-            metadata_gen, metadata_store, software, version, vr,
+            report.new_fetch_results,
+            extractor,
+            classifier,
+            chunker,
+            metadata_gen,
+            metadata_store,
+            software,
+            version,
+            vr,
         )
         if new_page_chunks:
             metadata_store.upsert_chunk_states(new_page_chunks)
 
         changed_page_chunks = await self._process_changed_pages(
-            report.changed_fetch_results, extractor, classifier, chunker,
-            metadata_gen, metadata_store, software, version, vr,
+            report.changed_fetch_results,
+            extractor,
+            classifier,
+            chunker,
+            metadata_gen,
+            metadata_store,
+            software,
+            version,
+            vr,
         )
 
         all_chunks_to_store = new_page_chunks + changed_page_chunks
 
         if not all_chunks_to_store:
             metadata_store.complete_run(
-                run_id, status="completed",
-                page_count=0, chunk_count=0,
+                run_id,
+                status="completed",
+                page_count=0,
+                chunk_count=0,
                 embedding_model=provider.model_name,
             )
             metadata_store.upsert_version(
-                software=software, version=version,
-                page_count=0, chunk_count=0,
+                software=software,
+                version=version,
+                page_count=0,
+                chunk_count=0,
                 embedding_model=provider.model_name,
                 embedding_dimension=provider.dimension,
             )
@@ -441,7 +491,11 @@ class Pipeline:
             return vr
 
         embedded, embed_err = await self._embed_chunks(
-            all_chunks_to_store, provider, software, version, vr,
+            all_chunks_to_store,
+            provider,
+            software,
+            version,
+            vr,
         )
         if embed_err:
             metadata_store.complete_run(run_id, status="failed", error_log=embed_err)
@@ -453,7 +507,11 @@ class Pipeline:
         assert embedded is not None
 
         store_err = await self._store_chunks(
-            embedded, storage, software, version, vr,
+            embedded,
+            storage,
+            software,
+            version,
+            vr,
         )
         if store_err:
             metadata_store.complete_run(run_id, status="failed", error_log=store_err)
@@ -463,8 +521,14 @@ class Pipeline:
             return vr
 
         await self._finalize_version(
-            metadata_store, run_id, report.new_fetch_results + report.changed_fetch_results,
-            embedded, provider, software, version, vr,
+            metadata_store,
+            run_id,
+            report.new_fetch_results + report.changed_fetch_results,
+            embedded,
+            provider,
+            software,
+            version,
+            vr,
         )
         self.crawler.close()
         await storage.close()
@@ -506,8 +570,17 @@ class Pipeline:
         for fetch_result in fetch_results:
             try:
                 await self._process_single_changed_page(
-                    fetch_result, extractor, classifier, chunker,
-                    metadata_gen, metadata_store, software, version, vr, differ, all_chunks,
+                    fetch_result,
+                    extractor,
+                    classifier,
+                    chunker,
+                    metadata_gen,
+                    metadata_store,
+                    software,
+                    version,
+                    vr,
+                    differ,
+                    all_chunks,
                 )
             except Exception as exc:
                 vr.extraction.pages_failed += 1
@@ -529,11 +602,20 @@ class Pipeline:
         all_chunks: list[Any],
     ) -> None:
         enriched = await self._process_single_page(
-            fetch_result, extractor, classifier, chunker,
-            metadata_gen, metadata_store, software, version, vr,
+            fetch_result,
+            extractor,
+            classifier,
+            chunker,
+            metadata_gen,
+            metadata_store,
+            software,
+            version,
+            vr,
         )
         diff = await differ.diff_page(
-            fetch_result.url, enriched, metadata_store,
+            fetch_result.url,
+            enriched,
+            metadata_store,
         )
         await self.events.emit(
             events.UPDATE_CHUNK_DIFFED,
@@ -559,8 +641,12 @@ class Pipeline:
         discovery_result: DiscoveryResult,
         version: str,
     ) -> tuple[
-        ExtractionEngine, ClassificationEngine, ChunkingEngine,
-        MetadataGenerator, StorageEngine, EmbeddingProvider,
+        ExtractionEngine,
+        ClassificationEngine,
+        ChunkingEngine,
+        MetadataGenerator,
+        StorageEngine,
+        EmbeddingProvider,
     ]:
         software = discovery_result.software
         content_selectors = discovery_result.content_selectors or {}
@@ -612,7 +698,9 @@ class Pipeline:
         vr.crawl.pages_processed = len(fetch_results)
         vr.crawl.duration_ms = (time.monotonic() - crawl_t0) * 1000
         await self.events.emit(
-            events.CRAWL_COMPLETED, software=software, version=version,
+            events.CRAWL_COMPLETED,
+            software=software,
+            version=version,
             pages=len(fetch_results),
         )
         return fetch_results, None
@@ -634,8 +722,15 @@ class Pipeline:
         for fetch_result in fetch_results:
             try:
                 enriched = await self._process_single_page(
-                    fetch_result, extractor, classifier, chunker,
-                    metadata_gen, metadata_store, software, version, vr,
+                    fetch_result,
+                    extractor,
+                    classifier,
+                    chunker,
+                    metadata_gen,
+                    metadata_store,
+                    software,
+                    version,
+                    vr,
                 )
                 all_chunks.extend(enriched)
             except Exception as exc:
@@ -663,21 +758,26 @@ class Pipeline:
 
         classified = classifier.classify(page)
         await self.events.emit(
-            events.CLASSIFICATION_COMPLETED, url=fetch_result.url,
+            events.CLASSIFICATION_COMPLETED,
+            url=fetch_result.url,
             page_type=classified.page_type.value,
         )
         vr.classification.pages_processed += 1
 
         chunks = chunker.chunk(classified)
         await self.events.emit(
-            events.CHUNKING_COMPLETED, url=fetch_result.url, chunk_count=len(chunks),
+            events.CHUNKING_COMPLETED,
+            url=fetch_result.url,
+            chunk_count=len(chunks),
         )
         vr.chunking.pages_processed += 1
         vr.chunking.chunks_produced += len(chunks)
 
         enriched = metadata_gen.generate(chunks, classified)
         await self.events.emit(
-            events.METADATA_GENERATED, url=fetch_result.url, chunk_count=len(enriched),
+            events.METADATA_GENERATED,
+            url=fetch_result.url,
+            chunk_count=len(enriched),
         )
         vr.metadata.pages_processed += 1
         vr.metadata.chunks_produced += len(enriched)
@@ -704,7 +804,10 @@ class Pipeline:
     ) -> tuple[list[Any] | None, str | None]:
         embed_t0 = time.monotonic()
         await self.events.emit(
-            events.EMBEDDING_STARTED, software=software, version=version, chunks=len(all_chunks),
+            events.EMBEDDING_STARTED,
+            software=software,
+            version=version,
+            chunks=len(all_chunks),
         )
         try:
             embedded = await self.embedding_engine.embed(all_chunks)
@@ -717,7 +820,9 @@ class Pipeline:
         vr.embedding.duration_ms = (time.monotonic() - embed_t0) * 1000
         await self.events.emit(
             events.EMBEDDING_COMPLETED,
-            software=software, version=version, chunks=len(embedded),
+            software=software,
+            version=version,
+            chunks=len(embedded),
         )
         return embedded, None
 
@@ -740,7 +845,10 @@ class Pipeline:
         vr.storage.chunks_produced = len(embedded)
         vr.storage.duration_ms = (time.monotonic() - store_t0) * 1000
         await self.events.emit(
-            events.STORAGE_UPSERTED, software=software, version=version, chunks=len(embedded),
+            events.STORAGE_UPSERTED,
+            software=software,
+            version=version,
+            chunks=len(embedded),
         )
         return None
 
@@ -756,18 +864,26 @@ class Pipeline:
         vr: PipelineVersionResult,
     ) -> None:
         metadata_store.complete_run(
-            run_id, status="completed",
-            page_count=len(fetch_results), chunk_count=len(embedded),
+            run_id,
+            status="completed",
+            page_count=len(fetch_results),
+            chunk_count=len(embedded),
             embedding_model=provider.model_name,
         )
         metadata_store.upsert_version(
-            software=software, version=version,
-            page_count=len(fetch_results), chunk_count=len(embedded),
-            embedding_model=provider.model_name, embedding_dimension=provider.dimension,
+            software=software,
+            version=version,
+            page_count=len(fetch_results),
+            chunk_count=len(embedded),
+            embedding_model=provider.model_name,
+            embedding_dimension=provider.dimension,
         )
         await self.events.emit(
-            events.VERSION_COMPLETED, software=software, version=version,
-            pages=len(fetch_results), chunks=len(embedded),
+            events.VERSION_COMPLETED,
+            software=software,
+            version=version,
+            pages=len(fetch_results),
+            chunks=len(embedded),
         )
 
     async def close(self) -> None:

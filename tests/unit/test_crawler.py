@@ -384,7 +384,8 @@ async def test_crawl_workers_wait_for_inflight_processing(tmp_path: Path) -> Non
         await real_sleep(delay)
 
     respx.get("https://example.com/docs/index.html").respond(
-        status_code=200, text="<html><body>index</body></html>",
+        status_code=200,
+        text="<html><body>index</body></html>",
     )
     for child in child_urls:
         respx.get(child).respond(status_code=200, text="<html><body>child</body></html>")

@@ -229,13 +229,19 @@ class TestUpdateDetector:
         store = MetadataStore(str(tmp_path / "meta.db"))
         store.upsert_page_state(
             url="https://example.com/docs/1.0/",
-            software="test", version="1.0",
-            content_hash="h1", etag="", last_modified="2025-01-01",
+            software="test",
+            version="1.0",
+            content_hash="h1",
+            etag="",
+            last_modified="2025-01-01",
         )
         store.upsert_page_state(
             url="https://example.com/docs/1.0/page1",
-            software="test", version="1.0",
-            content_hash="h2", etag="", last_modified="2025-01-02",
+            software="test",
+            version="1.0",
+            content_hash="h2",
+            etag="",
+            last_modified="2025-01-02",
         )
 
         detector = UpdateDetector()
@@ -261,8 +267,11 @@ class TestUpdateDetector:
         store = MetadataStore(str(tmp_path / "meta.db"))
         store.upsert_page_state(
             url="https://example.com/docs/1.0/",
-            software="test", version="1.0",
-            content_hash="h1", etag="", last_modified="2025-01-01",
+            software="test",
+            version="1.0",
+            content_hash="h1",
+            etag="",
+            last_modified="2025-01-01",
         )
 
         detector = UpdateDetector()
@@ -292,13 +301,19 @@ class TestUpdateDetector:
         store = MetadataStore(str(tmp_path / "meta.db"))
         store.upsert_page_state(
             url="https://example.com/docs/1.0/",
-            software="test", version="1.0",
-            content_hash="h1", etag="", last_modified="2025-01-01",
+            software="test",
+            version="1.0",
+            content_hash="h1",
+            etag="",
+            last_modified="2025-01-01",
         )
         store.upsert_page_state(
             url="https://example.com/docs/1.0/removed",
-            software="test", version="1.0",
-            content_hash="h2", etag="", last_modified="2025-01-02",
+            software="test",
+            version="1.0",
+            content_hash="h2",
+            etag="",
+            last_modified="2025-01-02",
         )
 
         detector = UpdateDetector()
@@ -323,8 +338,11 @@ class TestUpdateDetector:
         store = MetadataStore(str(tmp_path / "meta.db"))
         store.upsert_page_state(
             url="https://example.com/docs/1.0/",
-            software="test", version="1.0",
-            content_hash="h1", etag="", last_modified="2025-01-01",
+            software="test",
+            version="1.0",
+            content_hash="h1",
+            etag="",
+            last_modified="2025-01-01",
         )
 
         detector = UpdateDetector()
@@ -353,8 +371,11 @@ class TestUpdateDetector:
         store = MetadataStore(str(tmp_path / "meta.db"))
         store.upsert_page_state(
             url="https://example.com/docs/1.0/",
-            software="test", version="1.0",
-            content_hash="h1", etag="", last_modified="2025-01-01",
+            software="test",
+            version="1.0",
+            content_hash="h1",
+            etag="",
+            last_modified="2025-01-01",
         )
 
         detector = UpdateDetector()
@@ -380,8 +401,11 @@ class TestUpdateDetector:
         store = MetadataStore(str(tmp_path / "meta.db"))
         store.upsert_page_state(
             url="https://example.com/docs/1.0/",
-            software="test", version="1.0",
-            content_hash="h1", etag="", last_modified="2025-01-01",
+            software="test",
+            version="1.0",
+            content_hash="h1",
+            etag="",
+            last_modified="2025-01-01",
         )
 
         detector = UpdateDetector()
@@ -404,8 +428,11 @@ class TestUpdateDetector:
         store = MetadataStore(str(tmp_path / "meta.db"))
         store.upsert_page_state(
             url=url,
-            software="test", version="1.0",
-            content_hash="h1", etag='"abc"', last_modified="2025-01-01",
+            software="test",
+            version="1.0",
+            content_hash="h1",
+            etag='"abc"',
+            last_modified="2025-01-01",
         )
 
         respx.get(url).respond(status_code=304)

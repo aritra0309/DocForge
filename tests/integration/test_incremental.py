@@ -160,7 +160,9 @@ async def test_incremental_changed_page(tmp_path: Path) -> None:
     respx.get(f"{BASE}/sitemap.xml").respond(200, text=SITEMAP_WITH_CHANGE)
     respx.get(f"{BASE}/docs/1.0").respond(304)
     respx.get(f"{BASE}/docs/page1.html").respond(
-        200, text=page1_html_modified, headers={"Last-Modified": "2025-02-01"},
+        200,
+        text=page1_html_modified,
+        headers={"Last-Modified": "2025-02-01"},
     )
     respx.get(f"{BASE}/docs/page2.html").respond(304)
     respx.get(f"{BASE}/docs/private/secret.html").respond(404)

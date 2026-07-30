@@ -69,18 +69,22 @@ class UpdateDetector:
             An UpdateReport with URLs grouped by change status.
         """
         stored_pages = metadata_store.list_page_states(software, version)
-        stored_by_url: dict[str, dict[str, Any]] = {
-            p["url"]: p for p in stored_pages
-        }
+        stored_by_url: dict[str, dict[str, Any]] = {p["url"]: p for p in stored_pages}
 
         sitemap_url = discovery_result.sitemap_url
         if sitemap_url:
             return await self._detect_via_sitemap(
-                sitemap_url, stored_by_url, discovery_result, version,
+                sitemap_url,
+                stored_by_url,
+                discovery_result,
+                version,
             )
 
         return await self._detect_via_all_fetch(
-            list(stored_by_url.keys()), stored_by_url, discovery_result, version,
+            list(stored_by_url.keys()),
+            stored_by_url,
+            discovery_result,
+            version,
         )
 
     async def _detect_via_sitemap(
@@ -96,7 +100,10 @@ class UpdateDetector:
         except Exception as exc:
             logger.warning("Failed to fetch sitemap %s: %s", sitemap_url, exc)
             return await self._detect_via_all_fetch(
-                list(stored_by_url.keys()), stored_by_url, discovery_result, version,
+                list(stored_by_url.keys()),
+                stored_by_url,
+                discovery_result,
+                version,
             )
 
         base = discovery_result.base_url.rstrip("/")
@@ -146,7 +153,8 @@ class UpdateDetector:
 
         if report.changed_urls:
             changed_fetched, still_changed = await self._fetch_with_conditionals(
-                report.changed_urls, stored_by_url,
+                report.changed_urls,
+                stored_by_url,
             )
             report.changed_fetch_results = changed_fetched
             for url in still_changed:
@@ -167,17 +175,12 @@ class UpdateDetector:
             return
 
         changed_fetched, still_changed = await self._fetch_with_conditionals(
-            all_to_fetch, stored_lookup,
+            all_to_fetch,
+            stored_lookup,
         )
 
-        report.changed_fetch_results = [
-            r for r in changed_fetched
-            if r.url in report.changed_urls
-        ]
-        report.new_fetch_results = [
-            r for r in changed_fetched
-            if r.url in report.new_urls
-        ]
+        report.changed_fetch_results = [r for r in changed_fetched if r.url in report.changed_urls]
+        report.new_fetch_results = [r for r in changed_fetched if r.url in report.new_urls]
 
         for url in still_changed:
             if url in report.changed_urls:
@@ -207,7 +210,9 @@ class UpdateDetector:
 
             try:
                 result = await self.fetcher.fetch(
-                    url, etag=etag or None, last_modified=last_modified or None,
+                    url,
+                    etag=etag or None,
+                    last_modified=last_modified or None,
                 )
                 if result.status_code == HTTP_NOT_MODIFIED:
                     unchanged_urls.append(url)

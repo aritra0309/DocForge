@@ -20,11 +20,7 @@ class DiffReport:
 
     @property
     def total_changed(self) -> int:
-        return (
-            len(self.chunks_to_add)
-            + len(self.chunks_updated)
-            + len(self.chunks_to_remove)
-        )
+        return len(self.chunks_to_add) + len(self.chunks_updated) + len(self.chunks_to_remove)
 
 
 class ChunkDiffer:
@@ -72,9 +68,6 @@ class ChunkDiffer:
                 report.unchanged_chunk_ids.append(cid)
                 stored_by_chunk_id.pop(cid, None)
 
-        report.chunks_to_remove = [
-            cid for cid in stored_by_chunk_id
-            if cid not in new_chunk_ids
-        ]
+        report.chunks_to_remove = [cid for cid in stored_by_chunk_id if cid not in new_chunk_ids]
 
         return report
