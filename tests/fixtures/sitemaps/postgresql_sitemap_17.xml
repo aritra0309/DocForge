@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.postgresql.org/docs/17/</loc>
+    <lastmod>2025-01-15</lastmod>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.postgresql.org/docs/17/sql/createindex.html</loc>
+    <lastmod>2025-01-10</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.postgresql.org/docs/17/sql/drop-index.html</loc>
+    <lastmod>2025-01-08</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.postgresql.org/docs/17/tutorial.html</loc>
+    <lastmod>2025-01-12</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.postgresql.org/docs/17/release-17.1.html</loc>
+    <lastmod>2025-01-05</lastmod>
+    <priority>0.3</priority>
+  </url>
+</urlset>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>MongoDB Aggregation - MongoDB Manual</title>
+  <meta name="description" content="MongoDB aggregation pipeline reference">
+</head>
+<body>
+  <nav class="leftnav">
+    <a href="/">MongoDB</a>
+    <a href="/manual">Manual</a>
+    <a href="/manual/aggregation">Aggregation</a>
+  </nav>
+  <section id="content" role="main">
+    <article>
+      <h1>Aggregation Pipeline</h1>
+      <p>An aggregation pipeline consists of one or more stages that process documents.</p>
+      <p>Each stage performs an operation on the input documents and passes the results to the next stage.</p>
+      <h2>Pipeline Stages</h2>
+      <h3>$match</h3>
+      <p>Filters the documents to pass only the documents that match the specified condition(s).</p>
+      <pre><code class="language-javascript">{ $match: { status: "A" } }
+</code></pre>
+      <h3>$group</h3>
+      <p>Groups input documents by the specified _id expression and for each distinct grouping, outputs a document.</p>
+      <pre><code class="language-javascript">{ $group : { _id : "$author", books: { $push: "$title" } } }
+</code></pre>
+      <h3>$sort</h3>
+      <pre><code class="language-javascript">{ $sort: { count: -1, title: 1 } }
+</code></pre>
+      <h2>Example Pipeline</h2>
+      <pre><code class="language-javascript">db.orders.aggregate([
+   { $match: { status: "A" } },
+   { $group: { _id: "$cust_id", total: { $sum: "$amount" } } }
+])
+</code></pre>
+      <div class="admonition note">
+        <p class="admonition-title">Note</p>
+        <p>Starting in MongoDB 4.2, you can use aggregation expressions in more contexts.</p>
+      </div>
+    </article>
+  </section>
+  <footer>&copy; MongoDB, Inc.</footer>
+</body>
+</html>

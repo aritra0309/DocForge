@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>PostgreSQL Indexes Overview</title>
+  <meta name="description" content="Overview of PostgreSQL index types and usage">
+</head>
+<body>
+  <nav class="toc">
+    <a href="/docs/17/">Home</a>
+    <a href="/docs/17/indexes.html">Indexes</a>
+  </nav>
+  <div id="docContent">
+    <h1>Indexes</h1>
+    <p>Indexes are a common way to enhance database performance. An index allows the database server to find and retrieve specific rows much faster than it could do without an index.</p>
+    <h2>Index Types</h2>
+    <p>PostgreSQL provides several index types:</p>
+    <ul>
+      <li><strong>B-tree</strong> — the default index type, can handle equality and range queries.</li>
+      <li><strong>Hash</strong> — can only handle simple equality comparisons.</li>
+      <li><strong>GiST</strong> — a framework that allows implementation of many different indexing strategies.</li>
+      <li><strong>SP-GiST</strong> — supports partitioned search trees.</li>
+      <li><strong>GIN</strong> — suitable for composite values (arrays, full-text search).</li>
+      <li><strong>BRIN</strong> — block range indexes, work well for naturally ordered large tables.</li>
+    </ul>
+    <h2>Creating an Index</h2>
+    <pre><code class="language-sql">CREATE INDEX test1_id_index ON test1 (id);</code></pre>
+    <h2>Multicolumn Indexes</h2>
+    <p>An index can be defined on more than one column of a table.</p>
+    <pre><code class="language-sql">CREATE INDEX test2_mm_idx ON test2 (major, minor);</code></pre>
+    <h2>Unique Indexes</h2>
+    <pre><code class="language-sql">CREATE UNIQUE INDEX title_idx ON films (title);</code></pre>
+    <h2>Partial Indexes</h2>
+    <p>A partial index is an index built over a subset of a table.</p>
+    <pre><code class="language-sql">CREATE INDEX orders_unbilled_index ON orders (order_nr)
+    WHERE billed IS NOT true;</code></pre>
+  </div>
+  <footer>Copyright &copy; PostgreSQL Global Development Group</footer>
+</body>
+</html>

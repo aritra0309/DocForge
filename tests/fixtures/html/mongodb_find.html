@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>MongoDB Find Documents - MongoDB Manual</title>
+  <meta name="description" content="Query documents from a MongoDB collection">
+</head>
+<body>
+  <nav class="leftnav">
+    <a href="/">MongoDB Docs</a>
+    <a href="/manual">Manual</a>
+    <a href="/manual/crud">CRUD Operations</a>
+  </nav>
+  <section id="content" role="main">
+    <article>
+      <h1 id="find-documents">Find Documents</h1>
+      <p>This page describes how to select or query for documents in a collection.</p>
+      <h2 id="db.collection.find">db.collection.find()</h2>
+      <p>The <code>find()</code> method returns a cursor to the documents that match the query criteria.</p>
+      <h3>Syntax</h3>
+      <pre><code class="language-javascript">db.collection.find(query, projection, options)</code></pre>
+      <h3>Parameters</h3>
+      <dl>
+        <dt>query</dt>
+        <dd>Optional. Specifies selection filter using query operators.</dd>
+        <dt>projection</dt>
+        <dd>Optional. Specifies the fields to return in the documents that match the query filter.</dd>
+        <dt>options</dt>
+        <dd>Optional. Additional options for the query.</dd>
+      </dl>
+      <h2 id="examples">Examples</h2>
+      <h3>Select all documents</h3>
+      <pre><code class="language-javascript">db.inventory.find({})</code></pre>
+      <h3>Specify equality condition</h3>
+      <pre><code class="language-javascript">db.inventory.find({ status: "D" })</code></pre>
+      <h3>Specify conditions using query operators</h3>
+      <pre><code class="language-javascript">db.inventory.find({ status: { $in: [ "A", "D" ] } })</code></pre>
+      <div class="admonition important">
+        <p class="admonition-title">Important</p>
+        <p>Starting in MongoDB 4.4, you can specify a projection expression as a field argument to the find() method.</p>
+      </div>
+      <p>For more information, see <a href="query-documents.html">Query Documents</a>.</p>
+    </article>
+  </section>
+  <footer>&copy; MongoDB, Inc.</footer>
+</body>
+</html>

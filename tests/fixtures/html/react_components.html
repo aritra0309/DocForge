@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Your First Component – React</title>
+  <meta name="description" content="React components tutorial">
+</head>
+<body>
+  <nav id="navigation">
+    <a href="/">React</a>
+    <a href="/learn">Learn</a>
+    <a href="/learn/your-first-component">Your First Component</a>
+  </nav>
+  <main>
+    <article>
+      <h1>Your First Component</h1>
+      <p><em>Components</em> are one of the core concepts of React. They are the foundation upon which you build user interfaces (UI).</p>
+      <h2>Defining a component</h2>
+      <p>A React component is a JavaScript function that you can sprinkle with markup:</p>
+      <pre><code class="language-javascript">export default function Profile() {
+  return (
+    &lt;img
+      src="https://i.imgur.com/MK3eW3Am.jpg"
+      alt="Katherine Johnson"
+    /&gt;
+  );
+}
+</code></pre>
+      <h2>Step 1: Export the component</h2>
+      <p>The <code>export default</code> prefix is a standard JavaScript syntax. It lets you mark the main function in a file so that you can later import it from other files.</p>
+      <h2>Step 2: Define the function</h2>
+      <p>With <code>function Profile() {'{}'}</code> you define a JavaScript function with the name Profile.</p>
+      <div class="admonition warning">
+        <p class="admonition-title">Warning</p>
+        <p>React components are regular JavaScript functions, but their names must start with a capital letter or they won't work!</p>
+      </div>
+      <h2>Step 3: Add markup</h2>
+      <p>The component returns an <code>&lt;img /&gt;</code> tag with <code>src</code> and <code>alt</code> attributes. This markup looks like HTML, but it is actually JavaScript under the hood!</p>
+      <h2>Using a component</h2>
+      <p>Now that you've defined your <code>Profile</code> component, you can nest it inside other components.</p>
+      <pre><code class="language-javascript">function Gallery() {
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;Amazing scientists&lt;/h1&gt;
+      &lt;Profile /&gt;
+      &lt;Profile /&gt;
+      &lt;Profile /&gt;
+    &lt;/section&gt;
+  );
+}
+</code></pre>
+    </article>
+  </main>
+  <footer>React Docs — CC BY 4.0</footer>
+</body>
+</html>

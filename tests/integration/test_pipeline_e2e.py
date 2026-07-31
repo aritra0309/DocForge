@@ -12,9 +12,15 @@ from docforge.core.models import DiscoveryResult
 from docforge.core.pipeline import Pipeline
 from docforge.embeddings.engine import EmbeddingEngine
 from docforge.embeddings.providers.base import EmbeddingProvider
+from docforge.storage.engine import StorageEngine
+from tests.fixtures.site import (
+    FIXTURE_SITE_BASE as BASE,
+    FIXTURE_SITE_PAGE_COUNT,
+    fixture_sitemap_xml,
+    mock_fixture_site,
+)
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
-BASE = "https://docs.fixture.test"
 
 
 class FakeEmbeddingProvider(EmbeddingProvider):
@@ -30,21 +36,14 @@ class FakeEmbeddingProvider(EmbeddingProvider):
 @pytest.mark.asyncio
 @respx.mock
 async def test_pipeline_full_e2e(tmp_path: Path) -> None:  # ruff: ignore[too-many-statements]
-    index_html = (FIXTURES_DIR / "fixture_site_index.html").read_text(encoding="utf-8")
-    page1_html = (FIXTURES_DIR / "fixture_site_page1.html").read_text(encoding="utf-8")
-    page2_html = (FIXTURES_DIR / "fixture_site_page2.html").read_text(encoding="utf-8")
-
-    respx.get(f"{BASE}/robots.txt").respond(status_code=404)
-    respx.get(f"{BASE}/docs/1.0").respond(status_code=200, text=index_html)
-    respx.get(f"{BASE}/docs/page1.html").respond(status_code=200, text=page1_html)
-    respx.get(f"{BASE}/docs/page2.html").respond(status_code=200, text=page2_html)
-    respx.get(f"{BASE}/docs/private/secret.html").respond(status_code=404)
+    """Full pipeline on the 20-page fixture site; assert chunk count and search."""
+    mock_fixture_site(index_paths=("/docs/1.0",))
 
     config = DocForgeConfig(
         general={"data_dir": str(tmp_path / "data"), "log_level": "WARNING", "parallelism": 2},
         storage={"path": str(tmp_path / "vectordb"), "backend": "faiss"},
         embeddings={"cache_embeddings": False},
-        crawler={"max_pages_per_version": 10, "rate_limit_rps": 100},
+        crawler={"max_pages_per_version": 50, "rate_limit_rps": 100},
         chunker={"target_chunk_size": 512, "max_chunk_size": 1024},
     )
 
@@ -86,7 +85,8 @@ async def test_pipeline_full_e2e(tmp_path: Path) -> None:  # ruff: ignore[too-ma
     assert len(result.versions) == 1
     vr = result.versions[0]
 
-    assert vr.crawl.pages_processed >= 2
+    # Index + 20 content pages
+    assert vr.crawl.pages_processed >= FIXTURE_SITE_PAGE_COUNT
     assert vr.chunking.chunks_produced > 0
     assert vr.embedding.chunks_produced > 0
     assert vr.storage.chunks_produced > 0
@@ -106,6 +106,15 @@ async def test_pipeline_full_e2e(tmp_path: Path) -> None:  # ruff: ignore[too-ma
 
     pipeline_close = next(e for e in events_log if e["type"] == "pipeline.version.completed")
     assert pipeline_close["data"]["version"] == "1.0"
+
+    # Search correctness against indexed fixture content
+    storage = StorageEngine(config, software="fixture", version="1.0")
+    await storage.initialize(dimension=provider.dimension, model_name=provider.model_name)
+    query_vec = (await provider.embed_batch(["chunking overlapping semantic chunks"]))[0]
+    hits = await storage.search(query_vec, k=5)
+    assert len(hits) >= 1
+    assert any("chunk" in h.content.lower() or "fixture" in h.content.lower() for h in hits)
+    await storage.close()
 
     await pipeline.close()
 
@@ -144,3 +153,13 @@ async def test_pipeline_e2e_no_chunks_when_no_pages(tmp_path: Path) -> None:
     assert result.status == "completed"
 
     await pipeline.close()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+@respx.mock
+async def test_pipeline_e2e_sitemap_lists_twenty_pages() -> None:
+    """Fixture sitemap covers the full 20-page site used by e2e tests."""
+    xml = fixture_sitemap_xml()
+    assert xml.count("<url>") >= FIXTURE_SITE_PAGE_COUNT + 1
+    assert f"{BASE}/docs/page20.html" in xml

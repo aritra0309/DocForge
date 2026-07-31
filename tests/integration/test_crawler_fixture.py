@@ -11,9 +11,13 @@ from docforge.core.config import CrawlerConfig
 from docforge.core.models import DiscoveryResult
 from docforge.crawler.cache import ResponseCache
 from docforge.crawler.engine import CrawlEngine
+from tests.fixtures.site import (
+    FIXTURE_SITE_BASE as BASE,
+    FIXTURE_SITE_PAGE_COUNT,
+    mock_fixture_site,
+)
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
-BASE = "https://docs.fixture.test"
 
 
 @pytest.mark.integration
@@ -21,20 +25,15 @@ BASE = "https://docs.fixture.test"
 @respx.mock
 async def test_crawl_fixture_site(tmp_path: Path) -> None:
     """Crawl a multi-page fixture site respecting filters and robots.txt."""
-    index_html = (FIXTURES_DIR / "fixture_site_index.html").read_text(encoding="utf-8")
-    page1_html = (FIXTURES_DIR / "fixture_site_page1.html").read_text(encoding="utf-8")
-    page2_html = (FIXTURES_DIR / "fixture_site_page2.html").read_text(encoding="utf-8")
-
     robots = "User-agent: *\nDisallow: /docs/private/\n"
-    respx.get(f"{BASE}/robots.txt").respond(status_code=200, text=robots)
-    respx.get(f"{BASE}/docs/index.html").respond(status_code=200, text=index_html)
-    respx.get(f"{BASE}/docs/page1.html").respond(status_code=200, text=page1_html)
-    respx.get(f"{BASE}/docs/page2.html").respond(status_code=200, text=page2_html)
-    respx.get(f"{BASE}/docs/private/secret.html").respond(
-        status_code=200, text="<html>secret</html>"
+    mock_fixture_site(
+        index_paths=("/docs/index.html",),
+        robots_status=200,
+        robots_body=robots,
+        private_status=200,
     )
 
-    config = CrawlerConfig(max_pages_per_version=10, rate_limit_rps=100)
+    config = CrawlerConfig(max_pages_per_version=50, rate_limit_rps=100)
     cache = ResponseCache(db_path=tmp_path / "cache.db")
     queue_db = tmp_path / "queue.db"
     engine = CrawlEngine(config=config, cache=cache, queue_db_path=queue_db)
@@ -54,6 +53,8 @@ async def test_crawl_fixture_site(tmp_path: Path) -> None:
     assert f"{BASE}/docs/index.html" in urls
     assert f"{BASE}/docs/page1.html" in urls
     assert f"{BASE}/docs/page2.html" in urls
+    assert f"{BASE}/docs/page20.html" in urls
+    assert len(results) >= FIXTURE_SITE_PAGE_COUNT
     assert f"{BASE}/docs/private/secret.html" not in urls
     assert f"{BASE}/blog/post.html" not in urls
 
@@ -65,14 +66,7 @@ async def test_crawl_fixture_site(tmp_path: Path) -> None:
 @respx.mock
 async def test_crawl_resume_from_checkpoint(tmp_path: Path) -> None:
     """Interrupted crawl resumes from persisted queue state."""
-    index_html = (FIXTURES_DIR / "fixture_site_index.html").read_text(encoding="utf-8")
-    page1_html = (FIXTURES_DIR / "fixture_site_page1.html").read_text(encoding="utf-8")
-    page2_html = (FIXTURES_DIR / "fixture_site_page2.html").read_text(encoding="utf-8")
-
-    respx.get(f"{BASE}/robots.txt").respond(status_code=404)
-    respx.get(f"{BASE}/docs/index.html").respond(status_code=200, text=index_html)
-    respx.get(f"{BASE}/docs/page1.html").respond(status_code=200, text=page1_html)
-    respx.get(f"{BASE}/docs/page2.html").respond(status_code=200, text=page2_html)
+    mock_fixture_site(index_paths=("/docs/index.html",))
 
     config = CrawlerConfig(max_pages_per_version=100, rate_limit_rps=100)
     cache = ResponseCache(db_path=tmp_path / "cache.db")
@@ -115,13 +109,9 @@ async def test_crawl_resume_from_checkpoint(tmp_path: Path) -> None:
 @respx.mock
 async def test_cache_avoids_http_on_second_crawl(tmp_path: Path) -> None:
     """Second crawl run serves pages from cache without additional HTTP requests."""
-    index_html = (FIXTURES_DIR / "fixture_site_index.html").read_text(encoding="utf-8")
-    page1_html = (FIXTURES_DIR / "fixture_site_page1.html").read_text(encoding="utf-8")
-
-    route_index = respx.get(f"{BASE}/robots.txt").respond(status_code=404)
-    route_index = respx.get(f"{BASE}/docs/index.html").respond(status_code=200, text=index_html)
-    route_page1 = respx.get(f"{BASE}/docs/page1.html").respond(status_code=200, text=page1_html)
-    respx.get(f"{BASE}/docs/page2.html").respond(status_code=200, text="<html></html>")
+    routes = mock_fixture_site(index_paths=("/docs/index.html",))
+    route_index = routes["index"]
+    route_page1 = routes["page1"]
 
     config = CrawlerConfig(max_pages_per_version=5, rate_limit_rps=100, cache_ttl_hours=24)
     cache = ResponseCache(db_path=tmp_path / "cache.db")
@@ -137,12 +127,12 @@ async def test_cache_avoids_http_on_second_crawl(tmp_path: Path) -> None:
 
     engine1 = CrawlEngine(config=config, cache=cache)
     await engine1.crawl(f"{BASE}/docs/index.html", discovery_result=discovery)
-    calls_after_first = route_index.call_count + route_page1.call_count
+    calls_after_first = route_index.call_count + route_page1.call_count  # type: ignore[union-attr]
     engine1.close()
 
     engine2 = CrawlEngine(config=config, cache=cache)
     await engine2.crawl(f"{BASE}/docs/index.html", discovery_result=discovery)
-    calls_after_second = route_index.call_count + route_page1.call_count
+    calls_after_second = route_index.call_count + route_page1.call_count  # type: ignore[union-attr]
     engine2.close()
 
     assert calls_after_second == calls_after_first

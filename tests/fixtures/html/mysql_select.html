@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>MySQL SELECT Statement - MySQL 8.0 Reference Manual</title>
+  <meta name="description" content="MySQL SELECT syntax and examples">
+</head>
+<body>
+  <nav id="sidebar">
+    <a href="/">MySQL Docs</a>
+    <a href="/en/8.0/">MySQL 8.0</a>
+    <a href="/en/8.0/sql-statements.html">SQL Statements</a>
+  </nav>
+  <div class="documentation" id="docContent">
+    <h1>SELECT Statement</h1>
+    <p>SELECT is used to retrieve rows selected from one or more tables, and can include UNION statements and subqueries.</p>
+    <h2>Syntax</h2>
+    <pre><code class="language-sql">SELECT
+    [ALL | DISTINCT | DISTINCTROW ]
+    [HIGH_PRIORITY]
+    [STRAIGHT_JOIN]
+    select_expr [, select_expr] ...
+    [FROM table_references
+      [PARTITION partition_list]]
+    [WHERE where_condition]
+    [GROUP BY {col_name | expr | position}]
+    [HAVING where_condition]
+    [ORDER BY {col_name | expr | position}
+      [ASC | DESC]]
+    [LIMIT {[offset,] row_count | row_count OFFSET offset}]
+</code></pre>
+    <h2>Examples</h2>
+    <pre><code class="language-sql">SELECT * FROM t1 INNER JOIN t2 ON t1.id = t2.id;
+</code></pre>
+    <pre><code class="language-sql">SELECT a, b, a+b FROM t1;
+</code></pre>
+    <h2>SELECT ... INTO</h2>
+    <p>The SELECT ... INTO form of SELECT enables a query result to be stored in variables or written to a file.</p>
+    <div class="note">
+      <p class="admonition-title">Note</p>
+      <p>SELECT INTO requires privileges appropriate to the target.</p>
+    </div>
+    <p>See also <a href="insert.html">INSERT</a>, <a href="update.html">UPDATE</a>.</p>
+  </div>
+  <footer>MySQL 8.0 Reference Manual — Oracle Corporation</footer>
+</body>
+</html>

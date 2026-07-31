@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Redis Strings - Redis Documentation</title>
+  <meta name="description" content="Redis string data type reference">
+  <meta property="og:title" content="Strings - Redis">
+</head>
+<body>
+  <nav id="site-nav">
+    <a href="/">Redis</a>
+    <a href="/docs">Documentation</a>
+    <a href="/docs/data-types">Data Types</a>
+  </nav>
+  <div class="rst-content" id="main-content">
+    <article>
+      <h1>Strings</h1>
+      <p>Redis strings are the most basic Redis data structure. They store a sequence of bytes.</p>
+      <div class="admonition note">
+        <p class="admonition-title">Note</p>
+        <p>String values can be at most 512 MB in length.</p>
+      </div>
+      <h2 id="commands">Commands</h2>
+      <h3 id="set">SET</h3>
+      <p>Set the string value of a key.</p>
+      <pre><code class="language-redis">SET key value [NX | XX] [GET] [EX seconds | PX milliseconds]
+</code></pre>
+      <h3 id="get">GET</h3>
+      <p>Get the string value of a key.</p>
+      <pre><code class="language-redis">GET key</code></pre>
+      <h3 id="incr">INCR</h3>
+      <p>Increment the integer value of a key by one.</p>
+      <pre><code class="language-redis">INCR key</code></pre>
+      <h2 id="performance">Performance</h2>
+      <p>Most string commands are O(1), which means they're very efficient.</p>
+      <table>
+        <tr><th>Command</th><th>Complexity</th></tr>
+        <tr><td>SET</td><td>O(1)</td></tr>
+        <tr><td>GET</td><td>O(1)</td></tr>
+        <tr><td>STRLEN</td><td>O(1)</td></tr>
+      </table>
+      <p>See also <a href="data-types.html">Data Types Overview</a>.</p>
+    </article>
+  </div>
+  <footer>Redis, Inc. &copy; 2024</footer>
+</body>
+</html>

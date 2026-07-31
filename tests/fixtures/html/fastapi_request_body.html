@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>FastAPI Request Body - FastAPI</title>
+  <meta name="description" content="FastAPI request body using Pydantic models">
+</head>
+<body>
+  <nav id="navigation">
+    <a href="/">FastAPI</a>
+    <a href="/tutorial">Tutorial</a>
+    <a href="/tutorial/body">Request Body</a>
+  </nav>
+  <main>
+    <article>
+      <h1>Request Body</h1>
+      <p>When you need to send data from a client (let's say, a browser) to your API, you send it as a <strong>request body</strong>.</p>
+      <p>A <strong>request body</strong> is data sent by the client to your API. A <strong>response body</strong> is the data your API sends to the client.</p>
+      <h2>Import Pydantic's BaseModel</h2>
+      <p>First, you need to import <code>BaseModel</code> from <code>pydantic</code>:</p>
+      <pre><code class="language-python">from pydantic import BaseModel
+</code></pre>
+      <h2>Create your data model</h2>
+      <pre><code class="language-python">class Item(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    tax: float | None = None
+</code></pre>
+      <h2>Declare it as a parameter</h2>
+      <pre><code class="language-python">@app.post("/items/")
+async def create_item(item: Item):
+    return item
+</code></pre>
+      <div class="admonition tip">
+        <p class="admonition-title">Tip</p>
+        <p>If you declare the parameter with type <code>Item</code>, FastAPI will automatically read the body as JSON.</p>
+      </div>
+      <h2>Results</h2>
+      <p>With just that Python type declaration, FastAPI will:</p>
+      <ul>
+        <li>Read the body of the request as JSON.</li>
+        <li>Convert the corresponding types.</li>
+        <li>Validate the data.</li>
+        <li>Give you the received data in the parameter <code>item</code>.</li>
+      </ul>
+    </article>
+  </main>
+  <footer>FastAPI Documentation</footer>
+</body>
+</html>

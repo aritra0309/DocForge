@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>React useState Hook – React Reference</title>
+  <meta name="description" content="useState hook API reference for React">
+</head>
+<body>
+  <nav>
+    <a href="/">React</a>
+    <a href="/reference">Reference</a>
+    <a href="/reference/react">React APIs</a>
+  </nav>
+  <main>
+    <article>
+      <h1>useState</h1>
+      <p><code>useState</code> is a React Hook that lets you add a state variable to your component.</p>
+      <pre><code class="language-javascript">const [state, setState] = useState(initialState)</code></pre>
+      <h2>Reference</h2>
+      <h3>useState(initialState)</h3>
+      <p>Call <code>useState</code> at the top level of your component to declare a state variable.</p>
+      <h4>Parameters</h4>
+      <dl>
+        <dt>initialState</dt>
+        <dd>The value you want the state to be initially. It can be a value of any type, but there is a special behavior for functions.</dd>
+      </dl>
+      <h4>Returns</h4>
+      <p><code>useState</code> returns an array with exactly two values:</p>
+      <ol>
+        <li>The current state.</li>
+        <li>The set function that lets you update the state to a different value and trigger a re-render.</li>
+      </ol>
+      <h3>set functions, like setSomething(nextState)</h3>
+      <p>The set function returned by useState lets you update the state to a different value and trigger a re-render.</p>
+      <pre><code class="language-javascript">const [name, setName] = useState('Edward');
+
+function handleClick() {
+  setName('Taylor');
+}
+</code></pre>
+      <h2>Usage</h2>
+      <h3>Adding state to a component</h3>
+      <pre><code class="language-javascript">import { useState } from 'react';
+
+function MyComponent() {
+  const [age, setAge] = useState(28);
+  const [name, setName] = useState('Taylor');
+  const [todos, setTodos] = useState(() => createTodos());
+  // ...
+}
+</code></pre>
+      <h3>Updating state based on the previous state</h3>
+      <pre><code class="language-javascript">function handleClick() {
+  setAge(a => a + 1); // setAge(42 => 43)
+  setAge(a => a + 1); // setAge(43 => 44)
+  setAge(a => a + 1); // setAge(44 => 45)
+}
+</code></pre>
+    </article>
+  </main>
+  <footer>React Docs — CC BY 4.0</footer>
+</body>
+</html>

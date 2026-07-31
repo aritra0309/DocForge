@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Kubernetes Pods - Kubernetes Documentation</title>
+  <meta name="description" content="Kubernetes Pod reference documentation">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/">Kubernetes</a>
+    <a href="/docs/">Docs</a>
+    <a href="/docs/concepts/">Concepts</a>
+    <a href="/docs/concepts/workloads/">Workloads</a>
+  </nav>
+  <main class="td-content" role="main">
+    <article>
+      <h1 id="pods">Pods</h1>
+      <p><em>Pods</em> are the smallest deployable units of computing that you can create and manage in Kubernetes.</p>
+      <p>A Pod (as in a pod of whales or pea pod) is a group of one or more containers, with shared storage and network resources, and a specification for how to run the containers.</p>
+      <div class="admonition note">
+        <p class="admonition-title">Note</p>
+        <p>You need to install a container runtime into each node in the cluster so that Pods can run there.</p>
+      </div>
+      <h2 id="pod-templates">Pod templates</h2>
+      <p>The sample below is a manifest for a simple Job with a template that starts one container.</p>
+      <pre><code class="language-yaml">apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello
+spec:
+  template:
+    spec:
+      containers:
+      - name: hello
+        image: busybox:1.28
+        command: ['sh', '-c', 'echo "Hello, Kubernetes!" &amp;&amp; sleep 3600']
+      restartPolicy: OnFailure
+</code></pre>
+      <h2 id="pod-lifecycle">Pod Lifecycle</h2>
+      <p>Pods follow a defined lifecycle, starting in the <code>Pending</code> phase, moving through <code>Running</code> if at least one of its primary containers starts OK, and then through either the <code>Succeeded</code> or <code>Failed</code> phases depending on whether any container in the Pod terminated in failure.</p>
+      <table>
+        <tr><th>Value</th><th>Description</th></tr>
+        <tr><td>Pending</td><td>Pod accepted but not started</td></tr>
+        <tr><td>Running</td><td>Pod bound to a node, at least one container is running</td></tr>
+        <tr><td>Succeeded</td><td>All containers terminated successfully</td></tr>
+        <tr><td>Failed</td><td>All containers terminated, at least one failed</td></tr>
+      </table>
+      <p>See <a href="pod-lifecycle.html">Pod Lifecycle</a> for more details.</p>
+    </article>
+  </main>
+  <footer>Copyright &copy; 2024 The Kubernetes Authors</footer>
+</body>
+</html>

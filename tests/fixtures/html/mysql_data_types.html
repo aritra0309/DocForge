@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>MySQL Data Types - MySQL 8.0 Reference Manual</title>
+  <meta name="description" content="MySQL data types reference">
+</head>
+<body>
+  <nav id="sidebar">
+    <a href="/">MySQL</a>
+    <a href="/en/8.0/">8.0</a>
+    <a href="/en/8.0/data-types.html">Data Types</a>
+  </nav>
+  <div id="docContent">
+    <h1>Data Types</h1>
+    <p>MySQL supports SQL data types in several categories: numeric types, date and time types, string (character and byte) types, spatial types, and the JSON data type.</p>
+    <h2>Numeric Data Types</h2>
+    <table>
+      <tr><th>Type</th><th>Storage (Bytes)</th><th>Minimum Value (Signed)</th><th>Maximum Value (Signed)</th></tr>
+      <tr><td>TINYINT</td><td>1</td><td>-128</td><td>127</td></tr>
+      <tr><td>SMALLINT</td><td>2</td><td>-32768</td><td>32767</td></tr>
+      <tr><td>MEDIUMINT</td><td>3</td><td>-8388608</td><td>8388607</td></tr>
+      <tr><td>INT</td><td>4</td><td>-2147483648</td><td>2147483647</td></tr>
+      <tr><td>BIGINT</td><td>8</td><td>-2^63</td><td>2^63-1</td></tr>
+    </table>
+    <h2>String Data Types</h2>
+    <p>The string data types are CHAR, VARCHAR, BINARY, VARBINARY, BLOB, TEXT, ENUM, and SET.</p>
+    <pre><code class="language-sql">CREATE TABLE example (
+    name VARCHAR(255),
+    description TEXT,
+    status ENUM('active', 'inactive', 'pending')
+);</code></pre>
+    <h2>Date and Time Types</h2>
+    <p>The date and time data types for representing temporal values are DATE, TIME, DATETIME, TIMESTAMP, and YEAR.</p>
+    <pre><code class="language-sql">CREATE TABLE events (
+    event_date DATE,
+    event_time TIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+  </div>
+  <footer>MySQL 8.0 Reference Manual — Oracle Corporation</footer>
+</body>
+</html>

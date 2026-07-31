@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>React Hooks – React</title>
+  <meta name="description" content="React Hooks documentation">
+</head>
+<body>
+  <nav class="nav-docs" id="navigation">
+    <a href="/">React</a>
+    <a href="/learn">Learn</a>
+    <a href="/reference">Reference</a>
+  </nav>
+  <main id="root">
+    <article>
+      <h1>React Hooks</h1>
+      <p>Hooks let you use different React features from your components. You can either use the built-in Hooks or combine them to build your own.</p>
+      <h2>State Hooks</h2>
+      <p>State lets a component "remember" information like user input.</p>
+      <h3>useState</h3>
+      <p>Declares a state variable that you can update directly.</p>
+      <pre><code class="language-javascript">import { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
+      Count: {count}
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+      <h3>useReducer</h3>
+      <p>Declares a state variable with the update logic inside a reducer function.</p>
+      <pre><code class="language-javascript">import { useReducer } from 'react';
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment': return { count: state.count + 1 };
+    default: return state;
+  }
+}
+
+function Counter() {
+  const [state, dispatch] = useReducer(reducer, { count: 0 });
+  return &lt;button onClick={() =&gt; dispatch({ type: 'increment' })}&gt;{state.count}&lt;/button&gt;;
+}
+</code></pre>
+      <h2>Effect Hooks</h2>
+      <h3>useEffect</h3>
+      <p>Connects a component to an external system.</p>
+      <pre><code class="language-javascript">import { useEffect } from 'react';
+
+function Timer() {
+  useEffect(() =&gt; {
+    const id = setInterval(() =&gt; console.log('tick'), 1000);
+    return () =&gt; clearInterval(id);
+  }, []);
+}
+</code></pre>
+      <h2>Context Hooks</h2>
+      <h3>useContext</h3>
+      <p>Reads and subscribes to a context.</p>
+      <pre><code class="language-javascript">const value = useContext(MyContext);
+</code></pre>
+    </article>
+  </main>
+  <footer>Copyright © 2024 Meta Platforms</footer>
+</body>
+</html>

@@ -1,11 +1,11 @@
 """Entry point for running DocForge as a module: python -m docforge."""
 
-from __future__ import annotations
+from docforge.cli import app
 
 
 def main() -> None:
     """Run the DocForge CLI."""
-    print("DocForge CLI — type 'docforge --help' for usage")
+    app()
 
 
 if __name__ == "__main__":

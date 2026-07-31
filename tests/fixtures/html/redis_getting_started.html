@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Redis Getting Started - Redis Documentation</title>
+  <meta name="description" content="Get started with Redis">
+</head>
+<body>
+  <nav>
+    <a href="/">Redis</a>
+    <a href="/docs">Docs</a>
+  </nav>
+  <main>
+    <article>
+      <h1>Getting Started with Redis</h1>
+      <p>This tutorial shows you how to install Redis and use it for the first time.</p>
+      <h2>Step 1: Install Redis</h2>
+      <p>On Ubuntu, you can install Redis using apt:</p>
+      <pre><code class="language-bash">sudo apt-get install redis-server</code></pre>
+      <p>On macOS using Homebrew:</p>
+      <pre><code class="language-bash">brew install redis</code></pre>
+      <h2>Step 2: Start Redis</h2>
+      <p>Start the Redis server:</p>
+      <pre><code class="language-bash">redis-server</code></pre>
+      <div class="admonition tip">
+        <p class="admonition-title">Tip</p>
+        <p>Use <code>redis-server --daemonize yes</code> to run Redis in the background.</p>
+      </div>
+      <h2>Step 3: Connect with redis-cli</h2>
+      <p>Connect to your Redis server using the CLI:</p>
+      <pre><code class="language-bash">redis-cli</code></pre>
+      <p>Try your first commands:</p>
+      <pre><code class="language-redis">127.0.0.1:6379> SET mykey "Hello"
+OK
+127.0.0.1:6379> GET mykey
+"Hello"</code></pre>
+    </article>
+  </main>
+  <footer>Redis, Inc.</footer>
+</body>
+</html>

@@ -11,9 +11,15 @@ from docforge.core.models import DiscoveryResult
 from docforge.core.pipeline import Pipeline
 from docforge.embeddings.engine import EmbeddingEngine
 from docforge.embeddings.providers.base import EmbeddingProvider
+from tests.fixtures.site import (
+    FIXTURE_SITE_BASE as BASE,
+    FIXTURE_SITE_PAGE_COUNT,
+    fixture_sitemap_xml,
+    load_fixture_html,
+    mock_fixture_site,
+)
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
-BASE = "https://docs.fixture.test"
 
 
 class FakeEmbeddingProvider(EmbeddingProvider):
@@ -25,20 +31,8 @@ class FakeEmbeddingProvider(EmbeddingProvider):
         return [[0.05 + (i * 0.01) for _ in range(self.dimension)] for i in range(len(texts))]
 
 
-SITEMAP_XML = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://docs.fixture.test/docs/1.0</loc><lastmod>2025-01-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page1.html</loc><lastmod>2025-01-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page2.html</loc><lastmod>2025-01-01</lastmod></url>
-</urlset>"""
-
-
-SITEMAP_WITH_CHANGE = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://docs.fixture.test/docs/1.0</loc><lastmod>2025-01-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page1.html</loc><lastmod>2025-02-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page2.html</loc><lastmod>2025-01-01</lastmod></url>
-</urlset>"""
+SITEMAP_XML = fixture_sitemap_xml()
+SITEMAP_WITH_CHANGE = fixture_sitemap_xml(changed_page=1)
 
 
 def _make_config(tmp_path: Path, suffix: str = "") -> DocForgeConfig:
@@ -50,7 +44,7 @@ def _make_config(tmp_path: Path, suffix: str = "") -> DocForgeConfig:
         },
         storage={"path": str(tmp_path / f"vectordb{suffix}"), "backend": "faiss"},
         embeddings={"cache_embeddings": False},
-        crawler={"max_pages_per_version": 10, "rate_limit_rps": 100},
+        crawler={"max_pages_per_version": 50, "rate_limit_rps": 100},
         chunker={"target_chunk_size": 512, "max_chunk_size": 1024},
     )
 
@@ -70,19 +64,7 @@ def _make_discovery(sitemap_url: str | None = f"{BASE}/sitemap.xml") -> AsyncMoc
 
 
 def _mock_html_pages(last_modified: str | None = None) -> None:
-    index_html = (FIXTURES_DIR / "fixture_site_index.html").read_text(encoding="utf-8")
-    page1_html = (FIXTURES_DIR / "fixture_site_page1.html").read_text(encoding="utf-8")
-    page2_html = (FIXTURES_DIR / "fixture_site_page2.html").read_text(encoding="utf-8")
-
-    headers = {}
-    if last_modified:
-        headers["Last-Modified"] = last_modified
-
-    respx.get(f"{BASE}/robots.txt").respond(status_code=404)
-    respx.get(f"{BASE}/docs/1.0").respond(200, text=index_html, headers=headers)
-    respx.get(f"{BASE}/docs/page1.html").respond(200, text=page1_html, headers=headers)
-    respx.get(f"{BASE}/docs/page2.html").respond(200, text=page2_html, headers=headers)
-    respx.get(f"{BASE}/docs/private/secret.html").respond(404)
+    mock_fixture_site(index_paths=("/docs/1.0",), last_modified=last_modified)
 
 
 def _make_pipeline(config: DocForgeConfig, provider: FakeEmbeddingProvider) -> Pipeline:
@@ -112,7 +94,7 @@ async def test_incremental_no_changes_sitemap(tmp_path: Path) -> None:
 
     result = await pipeline.run("fixture", mode="full")
     assert result.status == "completed"
-    assert result.versions[0].crawl.pages_processed == 3
+    assert result.versions[0].crawl.pages_processed >= FIXTURE_SITE_PAGE_COUNT
     await pipeline.close()
 
     respx.get(f"{BASE}/sitemap.xml").respond(200, text=SITEMAP_XML)
@@ -145,16 +127,12 @@ async def test_incremental_changed_page(tmp_path: Path) -> None:
 
     result = await pipeline.run("fixture", mode="full")
     assert result.status == "completed"
-    assert result.versions[0].crawl.pages_processed == 3
+    assert result.versions[0].crawl.pages_processed >= FIXTURE_SITE_PAGE_COUNT
     await pipeline.close()
 
-    page1_html_modified = (
-        (FIXTURES_DIR / "fixture_site_page1.html")
-        .read_text(encoding="utf-8")
-        .replace(
-            "<p>This is page 1 of the fixture site.</p>",
-            "<p>This is UPDATED page 1 content.</p>",
-        )
+    page1_html_modified = load_fixture_html("fixture_site_page1.html").replace(
+        "Install the fixture toolkit and run your first command.",
+        "UPDATED: Install the fixture toolkit with new instructions.",
     )
 
     respx.get(f"{BASE}/sitemap.xml").respond(200, text=SITEMAP_WITH_CHANGE)
@@ -164,7 +142,8 @@ async def test_incremental_changed_page(tmp_path: Path) -> None:
         text=page1_html_modified,
         headers={"Last-Modified": "2025-02-01"},
     )
-    respx.get(f"{BASE}/docs/page2.html").respond(304)
+    for i in range(2, FIXTURE_SITE_PAGE_COUNT + 1):
+        respx.get(f"{BASE}/docs/page{i}.html").respond(304)
     respx.get(f"{BASE}/docs/private/secret.html").respond(404)
 
     pipeline2 = _make_pipeline(config, provider)
@@ -194,11 +173,7 @@ async def test_incremental_removed_page(tmp_path: Path) -> None:
     assert result.status == "completed"
     await pipeline.close()
 
-    sitemap_missing_page = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://docs.fixture.test/docs/1.0</loc><lastmod>2025-01-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page1.html</loc><lastmod>2025-01-01</lastmod></url>
-</urlset>"""
+    sitemap_missing_page = fixture_sitemap_xml(page_count=FIXTURE_SITE_PAGE_COUNT - 1)
 
     respx.get(f"{BASE}/sitemap.xml").respond(200, text=sitemap_missing_page)
 
@@ -218,6 +193,8 @@ async def test_incremental_new_page(tmp_path: Path) -> None:
     config = _make_config(tmp_path, "_newpage")
     provider = FakeEmbeddingProvider()
 
+    # Index only first 19 pages via a truncated sitemap crawl path: full crawl still
+    # follows links, so mock all pages then add page21 as the "new" URL.
     _mock_html_pages(last_modified="2025-01-01")
 
     pipeline = _make_pipeline(config, provider)
@@ -227,16 +204,14 @@ async def test_incremental_new_page(tmp_path: Path) -> None:
     assert result.status == "completed"
     await pipeline.close()
 
-    sitemap_new_page = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://docs.fixture.test/docs/1.0</loc><lastmod>2025-01-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page1.html</loc><lastmod>2025-01-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page2.html</loc><lastmod>2025-01-01</lastmod></url>
-  <url><loc>https://docs.fixture.test/docs/page3.html</loc><lastmod>2025-02-01</lastmod></url>
-</urlset>"""
+    sitemap_new_page = fixture_sitemap_xml().replace(
+        "</urlset>",
+        "  <url><loc>https://docs.fixture.test/docs/page21.html</loc>"
+        "<lastmod>2025-02-01</lastmod></url>\n</urlset>",
+    )
 
     respx.get(f"{BASE}/sitemap.xml").respond(200, text=sitemap_new_page)
-    respx.get(f"{BASE}/docs/page3.html").respond(
+    respx.get(f"{BASE}/docs/page21.html").respond(
         200,
         text="<html><body><h1>New Page</h1><p>Brand new content.</p></body></html>",
     )

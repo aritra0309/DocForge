@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>First Steps - FastAPI</title>
+  <meta name="description" content="FastAPI first steps tutorial">
+</head>
+<body>
+  <nav id="navigation">
+    <a href="/docs">FastAPI Docs</a>
+    <a href="/docs/tutorial">Tutorial</a>
+    <a href="/docs/tutorial/first-steps">First Steps</a>
+  </nav>
+  <main id="main-content">
+    <article>
+      <h1>First Steps</h1>
+      <p>The simplest FastAPI file could look like this:</p>
+      <pre><code class="language-python">from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+</code></pre>
+      <p>Copy that to a file <code>main.py</code>.</p>
+      <h2>Run it</h2>
+      <p>Run the live server with:</p>
+      <pre><code class="language-bash">uvicorn main:app --reload
+</code></pre>
+      <div class="admonition note">
+        <p class="admonition-title">Note</p>
+        <p>The <code>--reload</code> flag makes the server restart after code changes. Only use it for development.</p>
+      </div>
+      <h2>Check it</h2>
+      <p>Open your browser at <a href="http://127.0.0.1:8000">http://127.0.0.1:8000</a>.</p>
+      <p>You will see the JSON response:</p>
+      <pre><code class="language-json">{"message": "Hello World"}
+</code></pre>
+      <h2>Interactive API docs</h2>
+      <p>Now go to <a href="http://127.0.0.1:8000/docs">http://127.0.0.1:8000/docs</a>.</p>
+      <p>You will see the automatic interactive API documentation (provided by Swagger UI).</p>
+    </article>
+  </main>
+  <footer>FastAPI Documentation</footer>
+</body>
+</html>

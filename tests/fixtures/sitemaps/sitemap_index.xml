@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://www.postgresql.org/sitemaps/docs-17.xml</loc>
+    <lastmod>2025-01-15</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.postgresql.org/sitemaps/docs-16.xml</loc>
+    <lastmod>2025-01-10</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.postgresql.org/sitemaps/docs-15.xml</loc>
+    <lastmod>2024-12-01</lastmod>
+  </sitemap>
+</sitemapindex>

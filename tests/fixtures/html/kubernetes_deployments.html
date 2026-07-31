@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Kubernetes Deployments - Kubernetes Documentation</title>
+  <meta name="description" content="Kubernetes Deployments reference documentation">
+</head>
+<body>
+  <nav>
+    <a href="/">Kubernetes</a>
+    <a href="/docs/">Docs</a>
+    <a href="/docs/concepts/workloads/controllers/">Controllers</a>
+  </nav>
+  <main role="main">
+    <article>
+      <h1>Deployments</h1>
+      <p>A <em>Deployment</em> provides declarative updates for Pods and ReplicaSets.</p>
+      <p>You describe a <em>desired state</em> in a Deployment, and the Deployment Controller changes the actual state to the desired state at a controlled rate.</p>
+      <h2>Creating a Deployment</h2>
+      <p>The following is an example of a Deployment:</p>
+      <pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+</code></pre>
+      <p>To create this Deployment, run:</p>
+      <pre><code class="language-bash">kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml</code></pre>
+      <h2>Updating a Deployment</h2>
+      <pre><code class="language-bash">kubectl set image deployment/nginx-deployment nginx=nginx:1.16.1</code></pre>
+      <h2>Rolling Back a Deployment</h2>
+      <pre><code class="language-bash">kubectl rollout undo deployment/nginx-deployment</code></pre>
+      <h2>Scaling a Deployment</h2>
+      <pre><code class="language-bash">kubectl scale deployment/nginx-deployment --replicas=10</code></pre>
+    </article>
+  </main>
+  <footer>Copyright &copy; 2024 The Kubernetes Authors.</footer>
+</body>
+</html>

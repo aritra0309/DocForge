@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Routing - FastAPI</title>
+  <meta name="description" content="FastAPI routing and path operations">
+  <meta property="og:title" content="Routing - FastAPI">
+</head>
+<body>
+  <nav class="md-nav" id="navigation">
+    <a href="/docs">FastAPI Docs</a>
+    <a href="/docs/tutorial">Tutorial</a>
+  </nav>
+  <main class="md-main__inner" id="main-content">
+    <article class="md-content__inner">
+      <h1 id="routing">Routing</h1>
+      <p>FastAPI uses Python type hints to define path operations (routes).</p>
+      <div class="admonition tip">
+        <p class="admonition-title">Tip</p>
+        <p>Each path operation decorator accepts path parameters defined with curly braces.</p>
+      </div>
+      <h2 id="path-operations">Path Operations</h2>
+      <p>A <em>path operation</em> is a function decorated with one of FastAPI's HTTP method decorators.</p>
+      <pre><code class="language-python">from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/items/{item_id}")
+async def read_item(item_id: int):
+    return {"item_id": item_id}
+</code></pre>
+      <h2 id="path-parameters">Path Parameters</h2>
+      <p>Path parameters are declared in the path string using curly braces and matched to function parameters.</p>
+      <pre><code class="language-python">@app.get("/users/{user_id}")
+async def read_user(user_id: str):
+    return {"user_id": user_id}
+</code></pre>
+      <h2 id="query-parameters">Query Parameters</h2>
+      <p>Function parameters not part of the path are treated as query parameters.</p>
+      <pre><code class="language-python">@app.get("/items/")
+async def read_items(skip: int = 0, limit: int = 100):
+    return {"skip": skip, "limit": limit}
+</code></pre>
+      <h2 id="request-body">Request Body</h2>
+      <p>Use Pydantic models to declare a request body.</p>
+      <pre><code class="language-python">from pydantic import BaseModel
+
+class Item(BaseModel):
+    name: str
+    price: float
+
+@app.post("/items/")
+async def create_item(item: Item):
+    return item
+</code></pre>
+      <p>See also <a href="query-params.html">Query Parameters</a> and <a href="body.html">Request Body</a>.</p>
+    </article>
+  </main>
+  <footer>FastAPI Documentation — MIT License</footer>
+</body>
+</html>

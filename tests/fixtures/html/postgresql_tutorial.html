@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>PostgreSQL Tutorial - PostgreSQL 17 Documentation</title>
+  <meta name="description" content="Getting started with PostgreSQL">
+</head>
+<body>
+  <nav class="toc">
+    <a href="/docs/17/">Home</a>
+    <a href="/docs/17/tutorial.html">Tutorial</a>
+  </nav>
+  <div id="docContent">
+    <h1>Tutorial</h1>
+    <p>Welcome to PostgreSQL. The following few chapters are intended to give a simple introduction to PostgreSQL, relational database concepts, and the SQL language to those who are new to any one of these aspects.</p>
+    <h2>1. Getting Started</h2>
+    <p>Before you can use PostgreSQL you need to install it. It is possible that PostgreSQL is already installed at your site, either because it was included in your operating system distribution or because the system administrator already installed it.</p>
+    <h2>2. The SQL Language</h2>
+    <p>SQL is the standard language for interacting with relational databases.</p>
+    <h3>2.1. Introduction</h3>
+    <p>This chapter provides an overview of how to use SQL to perform simple operations.</p>
+    <pre><code class="language-sql">CREATE TABLE weather (
+    city            varchar(80),
+    temp_lo         int,           -- low temperature
+    temp_hi         int,           -- high temperature
+    prcp            real,          -- precipitation
+    date            date
+);</code></pre>
+    <h3>2.2. Populating a Table With Rows</h3>
+    <pre><code class="language-sql">INSERT INTO weather VALUES ('San Francisco', 46, 50, 0.25, '1994-11-27');
+INSERT INTO weather (city, temp_lo, temp_hi, prcp, date)
+    VALUES ('San Francisco', 43, 57, 0.0, '1994-11-29');</code></pre>
+    <h3>2.3. Querying a Table</h3>
+    <pre><code class="language-sql">SELECT * FROM weather;</code></pre>
+    <pre><code class="language-sql">SELECT city, temp_lo, temp_hi, prcp, date FROM weather;</code></pre>
+    <p>Continue to <a href="advanced.html">Chapter 3. Advanced Features</a>.</p>
+  </div>
+  <footer>Copyright &copy; PostgreSQL Global Development Group</footer>
+</body>
+</html>

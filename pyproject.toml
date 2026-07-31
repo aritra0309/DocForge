@@ -146,6 +146,8 @@ preview = true
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "S106", "T201", "T203", "PLR6301", "PLR2004", "RUF069", "B017", "PLC2701", "PLC0415"]
 "src/docforge/__main__.py" = ["T201"]
+"src/docforge/cli/main.py" = ["T201", "PLR0913", "PLR0915", "PLR1702", "RUF100", "E501"]
+"src/docforge/api.py" = ["T201", "PLR0913", "PLR0915", "PLR1702", "RUF100", "E501", "PLR0904", "PLC0415", "TRY003", "PLR6301"]
 "src/docforge/crawler/cache.py" = ["PLR6301"]
 "src/docforge/crawler/engine.py" = ["PLR0915", "PLR1702", "PLR2004"]
 "src/docforge/crawler/fetcher.py" = ["PLR2004"]
@@ -215,6 +217,7 @@ omit = ["tests/*", "src/docforge/_version.py"]
 branch = true
 
 [tool.coverage.report]
+fail_under = 80
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -223,6 +226,7 @@ exclude_lines = [
     "if __name__ == .__main__.:",
 ]
 precision = 2
+show_missing = true
 
 [tool.pre-commit-hooks]
 [tool.pre-commit-hooks.ruff-check]

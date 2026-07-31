@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Redis Data Types - Redis Documentation</title>
+  <meta name="description" content="Overview of all Redis data types">
+</head>
+<body>
+  <nav id="site-nav">
+    <a href="/">Redis</a>
+    <a href="/docs">Documentation</a>
+    <a href="/docs/data-types">Data Types</a>
+  </nav>
+  <div id="main-content">
+    <article>
+      <h1>Data Types</h1>
+      <p>Redis is not a plain key-value store; it is actually a <em>data structures server</em>, supporting different kinds of values.</p>
+      <h2>Strings</h2>
+      <p>The most basic Redis data structure is a string. Use SET and GET to store and retrieve the value of a string:</p>
+      <pre><code class="language-redis">127.0.0.1:6379> SET mykey somevalue
+OK
+127.0.0.1:6379> GET mykey
+"somevalue"</code></pre>
+      <h2>Lists</h2>
+      <p>Redis Lists are lists of strings, sorted by insertion order.</p>
+      <pre><code class="language-redis">LPUSH mylist a
+LPUSH mylist b
+LRANGE mylist 0 -1</code></pre>
+      <h2>Sets</h2>
+      <p>Redis Sets are unordered collections of Strings.</p>
+      <pre><code class="language-redis">SADD myset 1 2 3
+SMEMBERS myset</code></pre>
+      <h2>Hashes</h2>
+      <p>Redis Hashes are maps between string fields and string values.</p>
+      <pre><code class="language-redis">HSET user:1000 username antirez birthyear 1977 verified 1
+HGET user:1000 username</code></pre>
+      <h2>Sorted Sets</h2>
+      <p>Redis Sorted Sets are similar to Sets, but every member is associated with a score (floating-point number).</p>
+      <pre><code class="language-redis">ZADD myzset 1 "one"
+ZADD myzset 2 "two"
+ZRANGE myzset 0 -1 WITHSCORES</code></pre>
+    </article>
+  </div>
+  <footer>Redis, Inc.</footer>
+</body>
+</html>
