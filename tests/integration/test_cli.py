@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -16,6 +17,14 @@ from docforge.core.models import DiscoveryResult
 from docforge.embeddings.providers.base import EmbeddingProvider
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
+
+# Typer/Rich versions differ in where ANSI style escapes are emitted in help
+# output.  Compare rendered text, not terminal formatting.
+_ANSI_ESCAPE_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x1b]*(?:\x1b\\|\x07))")
+
+
+def _plain_output(output: str) -> str:
+    return _ANSI_ESCAPE_RE.sub("", output)
 
 
 class FakeEmbeddingProvider(EmbeddingProvider):
@@ -384,16 +393,18 @@ class TestCLIHelp:
     def test_index_help(self, runner: CliRunner) -> None:
         result = runner.invoke(app, ["index", "--help"])
         assert result.exit_code == 0
-        assert "software" in result.output
-        assert "--version" in result.output
+        output = _plain_output(result.output)
+        assert "software" in output
+        assert "--version" in output
 
     def test_search_help(self, runner: CliRunner) -> None:
         result = runner.invoke(app, ["search", "--help"])
         assert result.exit_code == 0
-        assert "query" in result.output
-        assert "--software" in result.output
-        assert "--version" in result.output
-        assert "--k" in result.output
+        output = _plain_output(result.output)
+        assert "query" in output
+        assert "--software" in output
+        assert "--version" in output
+        assert "--k" in output
 
     def test_update_help(self, runner: CliRunner) -> None:
         result = runner.invoke(app, ["update", "--help"])
