@@ -104,11 +104,11 @@ weaviate = [
 docforge = "docforge.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/docforge/docforge"
-Repository = "https://github.com/docforge/docforge"
-Issues = "https://github.com/docforge/docforge/issues"
+Homepage = "https://github.com/aritra0309/DocForge"
+Repository = "https://github.com/aritra0309/DocForge"
+Issues = "https://github.com/aritra0309/DocForge/issues"
 Documentation = "https://docforge.example.com"
-Changelog = "https://github.com/docforge/docforge/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/aritra0309/DocForge/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/docforge"]
