@@ -8,6 +8,7 @@
 
 DocForge discovers documentation, crawls pages, extracts clean Markdown, classifies and chunks content, creates embeddings, and stores vectors for semantic search. It supports versioned indexes, incremental updates, and replaceable pipeline providers.
 
+
 ## Features
 
 - Zero-config discovery for PostgreSQL, MySQL, MongoDB, FastAPI, React, Kubernetes, and Redis
@@ -94,14 +95,9 @@ docforge delete postgresql --version 17
 
 Run `docforge --help` or `docforge COMMAND --help` for all options.
 
-## Documentation and examples
+## Documentation
 
-- [Getting started](docs/getting-started.md)
-- [CLI reference](docs/cli-reference.md)
-- [Architecture](docs/architecture.md)
-- [Plugin contracts](docs/plugins.md)
-- [Examples](examples/)
-- [Changelog](CHANGELOG.md)
+📖 **Live Documentation:** [DocForge Documentation](https://aritra0309.github.io/DocForge/)
 
 ## Development
 
