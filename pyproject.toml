@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "docforge"
+name = "docforge-rag"
 version = "0.1.0"
 description = "Automatically discovers, crawls, versions, chunks, and indexes official software documentation into a RAG-ready knowledge base."
 readme = "README.md"
