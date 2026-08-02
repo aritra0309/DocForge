@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "docforge"
-version = "0.1.0-dev"
+version = "0.1.0"
 description = "Automatically discovers, crawls, versions, chunks, and indexes official software documentation into a RAG-ready knowledge base."
 readme = "README.md"
 license = {text = "Apache-2.0"}

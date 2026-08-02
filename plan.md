@@ -909,11 +909,11 @@ Built with `mkdocs-material` + `mkdocstrings[python]` for auto-generated API doc
 
 **Release checklist:**
 
-- [ ] `CHANGELOG.md` entry for v0.1.0
-- [ ] All `TODO` and `FIXME` comments resolved or tracked as GitHub issues
-- [ ] `pyproject.toml` version bumped to `0.1.0`
-- [ ] GitHub Actions release workflow: on tag `v0.1.0` → publish to PyPI
-- [ ] Documentation site deployed (GitHub Pages or Read the Docs)
+- [x] `CHANGELOG.md` entry for v0.1.0
+- [x] All `TODO` and `FIXME` comments resolved or tracked as GitHub issues
+- [x] `pyproject.toml` version bumped to `0.1.0`
+- [x] GitHub Actions release workflow: on tag `v0.1.0` → publish to PyPI
+- [x] Documentation site deployed (GitHub Pages or Read the Docs)
 - [ ] GitHub release created with release notes
 
 **Definition of done:**

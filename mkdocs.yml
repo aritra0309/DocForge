@@ -1,0 +1,52 @@
+site_name: DocForge
+site_description: Turn official software documentation into a RAG-ready knowledge base.
+site_url: https://aritra0309.github.io/DocForge/
+repo_url: https://github.com/aritra0309/DocForge
+repo_name: aritra0309/DocForge
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: false
+            show_root_heading: true
+            members_order: source
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+nav:
+  - Overview: index.md
+  - Getting started: getting-started.md
+  - Architecture: architecture.md
+  - CLI reference: cli-reference.md
+  - API reference: api-reference.md
+  - Plugins: plugins.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md

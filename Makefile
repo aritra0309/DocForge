@@ -1,4 +1,4 @@
-.PHONY: help lint format typecheck test test-unit test-integration bench eval build clean install dev-install
+.PHONY: help lint format typecheck test test-unit test-integration bench eval build docs-serve docs-build clean install dev-install
 
 help:
 	@echo "DocForge - Available targets:"
@@ -11,6 +11,8 @@ help:
 	@echo "  make bench       - Run performance benchmarks"
 	@echo "  make eval        - Run retrieval evaluation suite"
 	@echo "  make build       - Build wheel and sdist"
+	@echo "  make docs-serve  - Serve documentation locally"
+	@echo "  make docs-build  - Build documentation site"
 	@echo "  make install     - Install package in editable mode"
 	@echo "  make dev-install - Install with dev dependencies"
 	@echo "  make clean       - Remove build artifacts"
@@ -51,6 +53,12 @@ eval:
 
 build:
 	python -m build
+
+docs-serve:
+	mkdocs serve
+
+docs-build:
+	mkdocs build --strict
 
 install:
 	pip install -e .
