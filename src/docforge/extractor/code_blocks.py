@@ -114,7 +114,7 @@ def post_process_markdown_code_blocks(markdown: str) -> str:
         else:
             output.append(line)
 
-    processed = "\n".join(output)
+    processed = "\n".join(_normalise_fence_spacing(output))
 
     def replace_text_fence(match: re.Match[str]) -> str:
         content = match.group(1)
@@ -124,3 +124,37 @@ def post_process_markdown_code_blocks(markdown: str) -> str:
         return match.group(0)
 
     return re.sub(r"```text\n(.*?)```", replace_text_fence, processed, flags=re.DOTALL)
+
+
+def _normalise_fence_spacing(lines: list[str]) -> list[str]:
+    """Apply stable Markdown spacing around fenced code blocks."""
+    normalised: list[str] = []
+    in_fence = False
+    after_closing_fence = False
+    for line in lines:
+        if line.startswith("```"):
+            if in_fence:
+                while normalised and not normalised[-1]:
+                    normalised.pop()
+                normalised.append(line)
+                in_fence = False
+                after_closing_fence = True
+            else:
+                if normalised and normalised[-1]:
+                    normalised.append("")
+                while len(normalised) > 1 and not normalised[-1] and not normalised[-2]:
+                    normalised.pop()
+                normalised.append(line)
+                in_fence = True
+                after_closing_fence = False
+            continue
+
+        if after_closing_fence and line and normalised and normalised[-1]:
+            normalised.append("")
+        if not in_fence and line.startswith("#") and normalised and normalised[-1]:
+            normalised.append("")
+        normalised.append(line)
+        if line:
+            after_closing_fence = False
+
+    return normalised

@@ -46,11 +46,11 @@ class StorageEngine:
         self,
         config: DocForgeConfig,
         software: str = "",
-        version: str = "",
+        version: str | None = None,
     ) -> None:
         self._config = config
         self._software = software
-        self._version = version
+        self._version = version or ""
         self._store: VectorStore | None = None
         self._metadata_store: MetadataStore | None = None
         self._initialized = False

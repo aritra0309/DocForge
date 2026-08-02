@@ -141,15 +141,19 @@ def test_chunking_benchmark_heading_chunker(heading_page: ClassifiedPage) -> Non
     # Benchmark
     iterations = 1000
     import time
+
     start = time.perf_counter()
     for _ in range(iterations):
         engine.chunk(heading_page)
     elapsed = time.perf_counter() - start
 
     chunks_per_sec = iterations / elapsed * 5  # ~5 chunks per page
-    assert chunks_per_sec >= 1000, f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    assert chunks_per_sec >= 1000, (
+        f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    )
 
     from tests.benchmarks import benchmark
+
     with benchmark("chunking_heading_chunker", int(iterations * 5)):
         pass
 
@@ -166,15 +170,19 @@ def test_chunking_benchmark_api_ref_chunker(api_ref_page: ClassifiedPage) -> Non
     # Benchmark
     iterations = 1000
     import time
+
     start = time.perf_counter()
     for _ in range(iterations):
         engine.chunk(api_ref_page)
     elapsed = time.perf_counter() - start
 
     chunks_per_sec = iterations / elapsed * 3  # ~3 chunks per page
-    assert chunks_per_sec >= 1000, f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    assert chunks_per_sec >= 1000, (
+        f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    )
 
     from tests.benchmarks import benchmark
+
     with benchmark("chunking_api_ref_chunker", int(iterations * 3)):
         pass
 
@@ -191,21 +199,27 @@ def test_chunking_benchmark_tutorial_chunker(tutorial_page: ClassifiedPage) -> N
     # Benchmark
     iterations = 1000
     import time
+
     start = time.perf_counter()
     for _ in range(iterations):
         engine.chunk(tutorial_page)
     elapsed = time.perf_counter() - start
 
     chunks_per_sec = iterations / elapsed * 4  # ~4 chunks per page
-    assert chunks_per_sec >= 1000, f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    assert chunks_per_sec >= 1000, (
+        f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    )
 
     from tests.benchmarks import benchmark
+
     with benchmark("chunking_tutorial_chunker", int(iterations * 4)):
         pass
 
 
 @pytest.mark.benchmark
-def test_chunking_benchmark_mixed_pages(heading_page: ClassifiedPage, api_ref_page: ClassifiedPage, tutorial_page: ClassifiedPage) -> None:
+def test_chunking_benchmark_mixed_pages(
+    heading_page: ClassifiedPage, api_ref_page: ClassifiedPage, tutorial_page: ClassifiedPage
+) -> None:
     """Benchmark chunking on mixed page types."""
     engine = ChunkingEngine()
     pages = [heading_page, api_ref_page, tutorial_page]
@@ -218,6 +232,7 @@ def test_chunking_benchmark_mixed_pages(heading_page: ClassifiedPage, api_ref_pa
     # Benchmark
     iterations = 500
     import time
+
     start = time.perf_counter()
     for _ in range(iterations):
         for page in pages:
@@ -226,8 +241,11 @@ def test_chunking_benchmark_mixed_pages(heading_page: ClassifiedPage, api_ref_pa
 
     total_chunks = iterations * 12  # ~4 chunks per page * 3 pages
     chunks_per_sec = total_chunks / elapsed
-    assert chunks_per_sec >= 1000, f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    assert chunks_per_sec >= 1000, (
+        f"Chunking throughput {chunks_per_sec:.1f} chunks/sec below target 1000"
+    )
 
     from tests.benchmarks import benchmark
+
     with benchmark("chunking_mixed_pages", total_chunks):
         pass

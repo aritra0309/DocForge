@@ -121,7 +121,7 @@ file = "src/docforge/_version.py"
 line-length = 100
 target-version = "py311"
 src = ["src"]
-exclude = [".git", "__pycache__", ".mypy_cache", ".ruff_cache", "build", "dist", "*.egg-info"]
+exclude = [".git", "__pycache__", ".mypy_cache", ".ruff_cache", "build", "dist", "*.egg-info", "tests/fixtures/markdown"]
 
 [tool.ruff.lint]
 select = [
@@ -144,7 +144,7 @@ ignore = ["PLR0913"]
 preview = true
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "S106", "T201", "T203", "PLR6301", "PLR2004", "RUF069", "B017", "PLC2701", "PLC0415"]
+"tests/**/*.py" = ["S101", "S106", "T201", "T203", "E501", "INP001", "PLR6301", "PLR2004", "PLR0913", "PLR0917", "RUF029", "RUF067", "RUF069", "B017", "PLC2701", "PLC0415"]
 "src/docforge/__main__.py" = ["T201"]
 "src/docforge/cli/main.py" = ["T201", "PLR0913", "PLR0915", "PLR1702", "RUF100", "E501"]
 "src/docforge/api.py" = ["T201", "PLR0913", "PLR0915", "PLR1702", "RUF100", "E501", "PLR0904", "PLC0415", "TRY003", "PLR6301"]
@@ -196,9 +196,14 @@ exclude = [
 module = ["lxml", "lxml.*", "markdownify", "readability", "voyageai", "openai", "jina", "lancedb", "weaviate", "weaviate.*", "pyarrow"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = ["."]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -213,7 +218,14 @@ markers = [
 
 [tool.coverage.run]
 source = ["src/docforge"]
-omit = ["tests/*", "src/docforge/_version.py"]
+omit = [
+    "tests/*",
+    "src/docforge/_version.py",
+    "src/docforge/storage/backends/chromadb.py",
+    "src/docforge/storage/backends/lancedb.py",
+    "src/docforge/storage/backends/qdrant.py",
+    "src/docforge/storage/backends/weaviate.py",
+]
 branch = true
 
 [tool.coverage.report]

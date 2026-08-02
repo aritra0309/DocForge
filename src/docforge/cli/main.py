@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -43,13 +44,27 @@ console = Console()
 
 
 def _run_async(coro: Any) -> Any:
-    """Run an async coroutine, handling existing event loop."""
+    """Run an async coroutine, including when invoked from an active event loop."""
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
         loop = None
     if loop and loop.is_running():
-        return asyncio.run_coroutine_threadsafe(coro, loop).result()
+        result: list[Any] = []
+        errors: list[BaseException] = []
+
+        def run_in_thread() -> None:
+            try:
+                result.append(asyncio.run(coro))
+            except BaseException as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=run_in_thread)
+        thread.start()
+        thread.join()
+        if errors:
+            raise errors[0]
+        return result[0]
     return asyncio.run(coro)
 
 
@@ -77,8 +92,10 @@ def _print_pipeline_result(result: PipelineResult, console_obj: Console) -> None
         if result.error:
             console_obj.print(f"  Error: {result.error}")
 
+    total_duration_ms = result.total_duration_ms
+    total_duration = total_duration_ms / 1000 if isinstance(total_duration_ms, int | float) else 0.0
     console_obj.print(f"  Software: [cyan]{result.software}[/cyan]")
-    console_obj.print(f"  Total Duration: [yellow]{result.total_duration_ms / 1000:.2f}s[/yellow]")
+    console_obj.print(f"  Total Duration: [yellow]{total_duration:.2f}s[/yellow]")
     console_obj.print(f"  Versions Processed: [magenta]{len(result.versions)}[/magenta]")
 
     for vr in result.versions:
@@ -108,7 +125,11 @@ def _print_pipeline_result(result: PipelineResult, console_obj: Console) -> None
                 name,
                 str(stats.pages_processed) if stats.pages_processed else "—",
                 str(stats.chunks_produced) if stats.chunks_produced else "—",
-                f"{stats.duration_ms / 1000:.2f}s" if stats.duration_ms else "—",
+                (
+                    f"{stats.duration_ms / 1000:.2f}s"
+                    if isinstance(stats.duration_ms, int | float) and stats.duration_ms
+                    else "—"
+                ),
             )
         console_obj.print(table)
 
@@ -144,6 +165,8 @@ def _print_search_results(results: list[SearchResult], console_obj: Console) -> 
         )
 
     console_obj.print(table)
+    for result in results:
+        console_obj.print(result.content)
 
 
 @app.callback(invoke_without_command=True)
@@ -179,7 +202,7 @@ def index(
     ] = None,
 ) -> None:
     """Run the full indexing pipeline for a software package."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
     pipeline = Pipeline(config)
 
     async def _run_index() -> PipelineResult:
@@ -222,13 +245,15 @@ def search(
     version: Annotated[
         str | None, typer.Option("--version", "-V", help="Filter by version")
     ] = None,
-    k: Annotated[int, typer.Option("--top-k", "-k", help="Number of results to return")] = 10,
+    k: Annotated[
+        int, typer.Option("--top-k", "--k", "-k", help="Number of results to return")
+    ] = 10,
     config_file: Annotated[
         Path | None, typer.Option("--config", "-c", help="Path to config file")
     ] = None,
 ) -> None:
     """Search the indexed documentation using semantic search."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
 
     async def _run_search() -> list[SearchResult]:
         provider = SentenceTransformersProvider(model_name=config.embeddings.model)
@@ -246,14 +271,14 @@ def search(
             entry = registry.lookup(software)
             if entry:
                 ver = entry.latest_version
-            else:
-                console.print(f"[red]Error: Software '{software}' not found in registry[/red]")
-                raise typer.Exit(1)
+        else:
+            console.print(f"[red]Error: Software '{software}' not found in registry[/red]")
+            raise typer.Exit(1)
 
         storage = StorageEngine(config, software=software, version=ver)
         await storage.initialize(dimension=provider.dimension, model_name=provider.model_name)
 
-        query_vector = (await embedding_engine.embed_batch([query]))[0]
+        query_vector = (await embedding_engine.provider.embed_batch([query]))[0]
         results = await storage.search(query_vector, k=k)
 
         await storage.close()
@@ -288,7 +313,7 @@ def update(
     ] = None,
 ) -> None:
     """Incrementally update indexed documentation (only changed pages)."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
     pipeline = Pipeline(config)
 
     async def _run_update() -> PipelineResult:
@@ -358,7 +383,7 @@ def reembed(
     ] = None,
 ) -> None:
     """Re-embed existing chunks with a different model (no re-crawl)."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
     pipeline = Pipeline(config)
 
     async def _run_reembed() -> PipelineResult:
@@ -407,7 +432,7 @@ def list_cmd(
     ] = None,
 ) -> None:
     """List all indexed software with their versions."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
     meta_store = _get_metadata_store(config)
     indexed = meta_store.list_software()
     meta_store.close()
@@ -466,7 +491,7 @@ def stats(
     ] = None,
 ) -> None:
     """Show detailed statistics for indexed software."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
     meta_store = _get_metadata_store(config)
 
     stats_data = meta_store.get_software_stats(software)
@@ -493,8 +518,8 @@ def stats(
             v["version"],
             str(v["page_count"]),
             str(v["chunk_count"]),
-            v["embedding_model"],
-            str(v["embedding_dimension"]),
+            v.get("embedding_model", "—"),
+            str(v.get("embedding_dimension", "—")),
             v["indexed_at"],
         )
 
@@ -512,19 +537,26 @@ def delete(
         str | None,
         typer.Option("--version", "-V", help="Specific version to delete (default: all versions)"),
     ] = None,
-    force: Annotated[bool, typer.Option("--force", "-f", help="Skip confirmation")] = False,
+    force: Annotated[
+        bool, typer.Option("--force", "--yes", "-f", help="Skip confirmation")
+    ] = False,
     config_file: Annotated[
         Path | None, typer.Option("--config", "-c", help="Path to config file")
     ] = None,
 ) -> None:
     """Delete indexed software or a specific version."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
     meta_store = _get_metadata_store(config)
 
     if not meta_store.get_software(software):
         console.print(f"[red]Software '{software}' not indexed[/red]")
         meta_store.close()
         raise typer.Exit(1)
+
+    async def _delete_version(storage_engine: StorageEngine, version_to_delete: str) -> None:
+        await storage_engine.initialize()
+        await storage_engine.delete(filters={"software": software, "version": version_to_delete})
+        await storage_engine.close()
 
     if version:
         if not meta_store.get_version(software, version):
@@ -541,12 +573,7 @@ def delete(
 
         storage = StorageEngine(config, software=software, version=version)
 
-        async def _del_ver(storage_engine: StorageEngine) -> None:
-            await storage_engine.initialize()
-            await storage_engine.delete(filters={"software": software, "version": version})
-            await storage_engine.close()
-
-        _run_async(_del_ver(storage))
+        _run_async(_delete_version(storage, version))
         meta_store.delete_version(software, version)
         console.print(f"[green]Deleted version {version} of {software}[/green]")
     else:
@@ -562,12 +589,7 @@ def delete(
             ver_str = v["version"]
             storage = StorageEngine(config, software=software, version=ver_str)
 
-            async def _del_ver(storage_engine: StorageEngine, ver: str) -> None:
-                await storage_engine.initialize()
-                await storage_engine.delete(filters={"software": software, "version": ver})
-                await storage_engine.close()
-
-            _run_async(_del_ver(storage, ver_str))
+            _run_async(_delete_version(storage, ver_str))
 
         meta_store.delete_software(software)
         console.print(f"[green]Deleted all versions of {software}[/green]")
@@ -585,7 +607,7 @@ def config(
     ] = None,
 ) -> None:
     """Show current configuration with source annotations."""
-    config = load_config(config_file) if config_file else load_config()
+    config = load_config(project_config_path=config_file) if config_file else load_config()
 
     table = Table(title="DocForge Configuration", box=box.ROUNDED)
     table.add_column("Section", style="cyan", no_wrap=True)

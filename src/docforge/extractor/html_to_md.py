@@ -28,18 +28,25 @@ def _convert_images(element: lxml_html.HtmlElement, base_url: str) -> None:
 def _convert_definition_lists(element: lxml_html.HtmlElement) -> None:
     """Convert dl/dt/dd to bold term + indented definition paragraphs."""
     for dl in element.cssselect("dl"):
-        parts: list[str] = []
+        replacement = lxml_html.Element("div")
+        replacement.set("class", "docforge-dl")
+        current: lxml_html.HtmlElement | None = None
         for child in dl:
             if child.tag == "dt":
                 term = " ".join(child.text_content().split())
-                parts.append(f"**{term}**")
+                current = lxml_html.Element("p")
+                strong = lxml_html.Element("strong")
+                strong.text = term
+                current.append(strong)
+                replacement.append(current)
             elif child.tag == "dd":
                 definition = " ".join(child.text_content().split())
-                parts.append(f": {definition}")
-
-        replacement = lxml_html.Element("div")
-        replacement.set("class", "docforge-dl")
-        replacement.text = "\n\n".join(parts)
+                if current is None:
+                    current = lxml_html.Element("p")
+                    replacement.append(current)
+                    current.text = f": {definition}"
+                else:
+                    current[0].tail = f"\n: {definition}"
         parent = dl.getparent()
         if parent is not None:
             parent.replace(dl, replacement)
@@ -92,7 +99,7 @@ def html_to_markdown(content: lxml_html.HtmlElement, base_url: str) -> str:
 
     markdown = re.sub(r"\n{3,}", "\n\n", markdown)
     markdown = _ensure_absolute_links(markdown, base_url)
-    return markdown.strip()
+    return str(markdown).strip()
 
 
 def _code_language_callback(el: lxml_html.HtmlElement) -> str | None:

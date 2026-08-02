@@ -16,6 +16,7 @@ def _collect_benchmark_results():
     yield
     # Print summary at end of session
     import tests.benchmarks as bm
+
     if hasattr(bm.benchmark, "results") and bm.benchmark.results:
         bm.print_summary_table(bm.benchmark.results)
         all_passed = bm.check_targets(bm.benchmark.results)

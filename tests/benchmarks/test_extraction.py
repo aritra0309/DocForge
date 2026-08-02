@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from docforge.core.models import FetchResult
 from docforge.extractor.engine import ExtractionEngine
@@ -34,16 +35,20 @@ async def test_extraction_benchmark_pages_per_sec() -> None:
     # Benchmark
     iterations = 200
     import time
+
     start = time.perf_counter()
     for _ in range(iterations):
         await engine.extract(fetch)
     elapsed = time.perf_counter() - start
 
     pages_per_sec = iterations / elapsed
-    assert pages_per_sec >= 100, f"Extraction throughput {pages_per_sec:.1f} pages/sec below target 100"
+    assert pages_per_sec >= 100, (
+        f"Extraction throughput {pages_per_sec:.1f} pages/sec below target 100"
+    )
 
     # Store result for summary
     from tests.benchmarks import benchmark
+
     with benchmark("extraction_pages_per_sec", iterations):
         pass  # Already timed above
 
@@ -71,23 +76,27 @@ async def test_extraction_benchmark_varied_pages() -> None:
     fetches = [_fetch_result(_load_fixture(fname), url) for fname, url in pages]
 
     # Warm up
-    for engine, fetch in zip(engines, fetches):
+    for engine, fetch in zip(engines, fetches, strict=False):
         for _ in range(5):
             await engine.extract(fetch)
 
     # Benchmark
     iterations = 100
     import time
+
     start = time.perf_counter()
     for _ in range(iterations):
-        for engine, fetch in zip(engines, fetches):
+        for engine, fetch in zip(engines, fetches, strict=False):
             await engine.extract(fetch)
     elapsed = time.perf_counter() - start
 
     total_pages = iterations * len(pages)
     pages_per_sec = total_pages / elapsed
-    assert pages_per_sec >= 100, f"Extraction throughput {pages_per_sec:.1f} pages/sec below target 100"
+    assert pages_per_sec >= 100, (
+        f"Extraction throughput {pages_per_sec:.1f} pages/sec below target 100"
+    )
 
     from tests.benchmarks import benchmark
+
     with benchmark("extraction_varied_pages_per_sec", total_pages):
         pass

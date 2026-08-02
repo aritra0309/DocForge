@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import respx
+from tests.fixtures.site import FIXTURE_SITE_BASE as BASE, mock_fixture_site
 from typer.testing import CliRunner
 
 from docforge.cli.main import app
 from docforge.core.config import DocForgeConfig
 from docforge.core.models import DiscoveryResult
 from docforge.embeddings.providers.base import EmbeddingProvider
-
-from tests.fixtures.site import FIXTURE_SITE_BASE as BASE, mock_fixture_site
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
 
@@ -74,7 +72,9 @@ class TestCLIConfig:
         assert result.exit_code == 0
         assert "Show current configuration" in result.output
 
-    def test_config_command_outputs_config(self, runner: CliRunner, mock_config: DocForgeConfig) -> None:
+    def test_config_command_outputs_config(
+        self, runner: CliRunner, mock_config: DocForgeConfig
+    ) -> None:
         with patch("docforge.cli.main.load_config", return_value=mock_config):
             result = runner.invoke(app, ["config"])
         assert result.exit_code == 0
@@ -86,7 +86,13 @@ class TestCLIConfig:
 class TestCLIIndex:
     @pytest.mark.asyncio
     @respx.mock
-    async def test_index_command_full_mode(self, runner: CliRunner, mock_config: DocForgeConfig, mock_discovery: AsyncMock, provider: FakeEmbeddingProvider) -> None:
+    async def test_index_command_full_mode(
+        self,
+        runner: CliRunner,
+        mock_config: DocForgeConfig,
+        mock_discovery: AsyncMock,
+        provider: FakeEmbeddingProvider,
+    ) -> None:
         _mock_html_pages()
 
         with patch("docforge.cli.main.load_config", return_value=mock_config):
@@ -124,8 +130,10 @@ class TestCLIIndex:
 class TestCLISearch:
     @pytest.mark.asyncio
     @respx.mock
-    async def test_search_command(self, runner: CliRunner, mock_config: DocForgeConfig, provider: FakeEmbeddingProvider) -> None:
-        from docforge.core.models import SearchResult, ChunkMetadata, PageType
+    async def test_search_command(
+        self, runner: CliRunner, mock_config: DocForgeConfig, provider: FakeEmbeddingProvider
+    ) -> None:
+        from docforge.core.models import ChunkMetadata, PageType, SearchResult
 
         mock_search_result = SearchResult(
             chunk_id="abc",
@@ -160,14 +168,18 @@ class TestCLISearch:
 
                 with patch("docforge.cli.main.EmbeddingEngine") as mock_embed_class:
                     mock_embed = AsyncMock()
-                    mock_embed.embed.return_value = [MagicMock(
-                        content="# Test\n\nTest content about creating indexes.",
-                        metadata=mock_search_result.metadata,
-                        vector=[0.1] * 8,
-                    )]
+                    mock_embed.embed.return_value = [
+                        MagicMock(
+                            content="# Test\n\nTest content about creating indexes.",
+                            metadata=mock_search_result.metadata,
+                            vector=[0.1] * 8,
+                        )
+                    ]
                     mock_embed_class.return_value = mock_embed
 
-                    result = runner.invoke(app, ["search", "how to create index", "--software", "fixture"])
+                    result = runner.invoke(
+                        app, ["search", "how to create index", "--software", "fixture"]
+                    )
 
         assert result.exit_code == 0, f"CLI failed: {result.output}"
         assert "Test content" in result.output or "creating indexes" in result.output
@@ -182,13 +194,37 @@ class TestCLIList:
             with patch("docforge.cli.main.MetadataStore") as mock_store_class:
                 mock_store = MagicMock(spec=MetadataStore)
                 mock_store.list_software.return_value = [
-                    {"software": "postgresql", "display_name": "PostgreSQL", "latest_version": "17", "last_indexed_at": "2025-01-01T00:00:00Z"},
-                    {"software": "redis", "display_name": "Redis", "latest_version": "7.2", "last_indexed_at": "2025-01-01T00:00:00Z"},
+                    {
+                        "software": "postgresql",
+                        "display_name": "PostgreSQL",
+                        "latest_version": "17",
+                        "last_indexed_at": "2025-01-01T00:00:00Z",
+                    },
+                    {
+                        "software": "redis",
+                        "display_name": "Redis",
+                        "latest_version": "7.2",
+                        "last_indexed_at": "2025-01-01T00:00:00Z",
+                    },
                 ]
                 # Mock list_versions for each software
                 mock_store.list_versions.side_effect = [
-                    [{"version": "17", "page_count": 100, "chunk_count": 500, "indexed_at": "2025-01-01T00:00:00Z"}],
-                    [{"version": "7.2", "page_count": 50, "chunk_count": 200, "indexed_at": "2025-01-01T00:00:00Z"}],
+                    [
+                        {
+                            "version": "17",
+                            "page_count": 100,
+                            "chunk_count": 500,
+                            "indexed_at": "2025-01-01T00:00:00Z",
+                        }
+                    ],
+                    [
+                        {
+                            "version": "7.2",
+                            "page_count": 50,
+                            "chunk_count": 200,
+                            "indexed_at": "2025-01-01T00:00:00Z",
+                        }
+                    ],
                 ]
                 mock_store_class.return_value = mock_store
 
@@ -215,7 +251,12 @@ class TestCLIStats:
                     "chunk_count": 50,
                 }
                 mock_store.list_versions.return_value = [
-                    {"version": "1.0", "page_count": 10, "chunk_count": 50, "indexed_at": "2025-01-01T00:00:00Z"}
+                    {
+                        "version": "1.0",
+                        "page_count": 10,
+                        "chunk_count": 50,
+                        "indexed_at": "2025-01-01T00:00:00Z",
+                    }
                 ]
                 mock_store_class.return_value = mock_store
 
@@ -233,7 +274,10 @@ class TestCLIDelete:
         with patch("docforge.cli.main.load_config", return_value=mock_config):
             with patch("docforge.cli.main.MetadataStore") as mock_store_class:
                 mock_store = MagicMock()
-                mock_store.get_software.return_value = {"software": "fixture", "display_name": "Fixture Test"}
+                mock_store.get_software.return_value = {
+                    "software": "fixture",
+                    "display_name": "Fixture Test",
+                }
                 mock_store.list_versions.return_value = [{"version": "1.0"}]
                 mock_store_class.return_value = mock_store
 
@@ -250,7 +294,13 @@ class TestCLIDelete:
 class TestCLIUpdate:
     @pytest.mark.asyncio
     @respx.mock
-    async def test_update_command(self, runner: CliRunner, mock_config: DocForgeConfig, mock_discovery: AsyncMock, provider: FakeEmbeddingProvider) -> None:
+    async def test_update_command(
+        self,
+        runner: CliRunner,
+        mock_config: DocForgeConfig,
+        mock_discovery: AsyncMock,
+        provider: FakeEmbeddingProvider,
+    ) -> None:
         _mock_html_pages()
 
         sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>

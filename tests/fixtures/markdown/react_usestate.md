@@ -14,7 +14,7 @@ Call `useState` at the top level of your component to declare a state variable.
 
 #### Parameters
 
-\*\*initialState\*\*
+**initialState**
 : The value you want the state to be initially. It can be a value of any type, but there is a special behavior for functions.
 
 #### Returns

@@ -17,9 +17,21 @@ MARKDOWN_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "markdown"
 
 # Registry-aligned selectors and canonical URLs for golden comparisons
 _GOLDEN_CASES: list[tuple[str, str, dict[str, str] | None]] = [
-    ("postgresql_create_index.html", "https://www.postgresql.org/docs/17/sql/createindex.html", {"main_content": "#docContent"}),
-    ("postgresql_indexes.html", "https://www.postgresql.org/docs/17/indexes.html", {"main_content": "#docContent"}),
-    ("postgresql_tutorial.html", "https://www.postgresql.org/docs/17/tutorial.html", {"main_content": "#docContent"}),
+    (
+        "postgresql_create_index.html",
+        "https://www.postgresql.org/docs/17/sql/createindex.html",
+        {"main_content": "#docContent"},
+    ),
+    (
+        "postgresql_indexes.html",
+        "https://www.postgresql.org/docs/17/indexes.html",
+        {"main_content": "#docContent"},
+    ),
+    (
+        "postgresql_tutorial.html",
+        "https://www.postgresql.org/docs/17/tutorial.html",
+        {"main_content": "#docContent"},
+    ),
     ("fastapi_getting_started.html", "https://fastapi.tiangolo.com/tutorial/first-steps/", None),
     ("fastapi_routing.html", "https://fastapi.tiangolo.com/tutorial/path-params/", None),
     ("fastapi_request_body.html", "https://fastapi.tiangolo.com/tutorial/body/", None),
@@ -31,7 +43,11 @@ _GOLDEN_CASES: list[tuple[str, str, dict[str, str] | None]] = [
     ("redis_strings.html", "https://redis.io/docs/latest/develop/data-types/strings/", None),
     ("redis_data_types.html", "https://redis.io/docs/latest/develop/data-types/", None),
     ("kubernetes_pods.html", "https://kubernetes.io/docs/concepts/workloads/pods/", None),
-    ("kubernetes_deployments.html", "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/", None),
+    (
+        "kubernetes_deployments.html",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+        None,
+    ),
     ("mongodb_find.html", "https://www.mongodb.com/docs/manual/tutorial/query-documents/", None),
     ("mongodb_aggregation.html", "https://www.mongodb.com/docs/manual/aggregation/", None),
     ("mysql_select.html", "https://dev.mysql.com/doc/refman/8.4/en/select.html", None),
@@ -195,10 +211,10 @@ async def test_extract_matches_markdown_golden(
 def test_markdown_goldens_cover_html_fixtures() -> None:
     """Every non-fixture-site HTML page has a corresponding markdown golden."""
     html_files = [
-        p.name
-        for p in FIXTURES_DIR.glob("*.html")
-        if not p.name.startswith("fixture_site")
+        p.name for p in FIXTURES_DIR.glob("*.html") if not p.name.startswith("fixture_site")
     ]
-    missing = [name for name in html_files if not (MARKDOWN_DIR / name.replace(".html", ".md")).exists()]
+    missing = [
+        name for name in html_files if not (MARKDOWN_DIR / name.replace(".html", ".md")).exists()
+    ]
     assert not missing, f"Missing markdown goldens for: {missing}"
     assert len(html_files) >= 20

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
+from functools import lru_cache
 
 import tiktoken
 
@@ -12,12 +14,25 @@ from docforge.core.models import Chunk, ClassifiedPage
 _ENCODING = "cl100k_base"
 
 
-def _get_encoder() -> tiktoken.Encoding:
-    return tiktoken.get_encoding(_ENCODING)
+@lru_cache(maxsize=1)
+def _get_encoder() -> tiktoken.Encoding | None:
+    """Return the tokenizer when its vocabulary is available locally.
+
+    ``tiktoken`` lazily downloads this vocabulary on some installations.  Core
+    chunking must remain usable offline, so token counting falls back to a
+    deterministic lexical approximation in that case.
+    """
+    try:
+        return tiktoken.get_encoding(_ENCODING)
+    except Exception:
+        return None
 
 
 def count_tokens(text: str) -> int:
-    return len(_get_encoder().encode(text))
+    encoder = _get_encoder()
+    if encoder is not None:
+        return len(encoder.encode(text))
+    return len(re.findall(r"\w+|[^\w\s]", text))
 
 
 def split_by_tokens(text: str, max_tokens: int, separator: str = "\n\n") -> list[str]:

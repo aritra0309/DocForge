@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
 from lxml import html as lxml_html
 
-from docforge.extractor.callouts import normalise_callouts, _detect_callout_type, _extract_callout_body
+from docforge.extractor.callouts import (
+    _detect_callout_type,
+    normalise_callouts,
+)
 from docforge.extractor.cleaners import (
     extract_breadcrumb,
     extract_main_content,
@@ -21,11 +23,10 @@ from docforge.extractor.code_blocks import (
     strip_line_numbers_from_pre,
 )
 from docforge.extractor.html_to_md import (
+    _ensure_absolute_links,
     extract_headings_from_markdown,
     html_to_markdown,
-    _ensure_absolute_links,
 )
-
 
 # ---------------------------------------------------------------------------
 # cleaners.py tests
@@ -41,24 +42,24 @@ class TestExtractMainContent:
 
     def test_registry_selector_not_found_falls_to_semantic(self) -> None:
         html = "<html><body><main><h1>Main</h1></main></body></html>"
-        element, meta = extract_main_content(html, {"main_content": "#nonexistent"})
+        _element, meta = extract_main_content(html, {"main_content": "#nonexistent"})
         assert "semantic" in meta["method"]
 
     def test_semantic_main_tag(self) -> None:
         html = "<html><body><main><h1>Hello</h1></main><nav>Nav</nav></body></html>"
-        element, meta = extract_main_content(html)
+        _element, meta = extract_main_content(html)
         assert "semantic" in meta["method"]
 
     def test_semantic_article_tag(self) -> None:
         html = "<html><body><article><h1>Article</h1><p>Content here.</p></article></body></html>"
-        element, meta = extract_main_content(html)
+        _element, meta = extract_main_content(html)
         assert "semantic" in meta["method"]
 
     def test_heuristic_fallback_doc_content(self) -> None:
         html = "<html><body><div class='doc-content'><h1>Doc</h1><p>Content text here for density.</p></div></body></html>"
         _, meta = extract_main_content(html)
         # Will fall to heuristic since no semantic or main selectors
-        assert meta["method"] in ("heuristic", "readability", "body_fallback", "semantic:main")
+        assert meta["method"] in {"heuristic", "readability", "body_fallback", "semantic:main"}
 
     def test_removes_nav_from_content(self) -> None:
         html = "<html><body><main><h1>Title</h1><nav>Navigation stuff</nav><p>Real content</p></main></body></html>"
@@ -72,7 +73,7 @@ class TestExtractMainContent:
 
     def test_invalid_html_handled(self) -> None:
         # Should not raise
-        element, meta = extract_main_content("<not valid html>")
+        element, _meta = extract_main_content("<not valid html>")
         assert element is not None
 
     def test_role_main_semantic(self) -> None:
@@ -85,12 +86,14 @@ class TestExtractMainContent:
         html = "<html><body><p>Simple content</p></body></html>"
         element, meta = extract_main_content(html)
         assert element is not None
-        assert meta["method"] in ("readability", "body_fallback", "semantic:main")
+        assert meta["method"] in {"readability", "body_fallback", "semantic:main"}
 
 
 class TestExtractPageTitle:
     def test_h1_preferred(self) -> None:
-        html = "<html><head><title>Page - Site</title></head><body><h1>Real Title</h1></body></html>"
+        html = (
+            "<html><head><title>Page - Site</title></head><body><h1>Real Title</h1></body></html>"
+        )
         doc = lxml_html.fromstring(html)
         title = extract_page_title(doc, html)
         assert title == "Real Title"

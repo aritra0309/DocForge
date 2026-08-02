@@ -43,7 +43,7 @@ def load_eval_dataset(path: Path | None = None) -> list[EvalQuestion]:
     if not path.exists():
         return []
 
-    with open(path) as f:
+    with Path(path).open(encoding="utf-8") as f:
         data = json.load(f)
 
     return [EvalQuestion(**item) for item in data]
@@ -54,7 +54,7 @@ def save_eval_dataset(questions: list[EvalQuestion], path: Path | None = None) -
     if path is None:
         path = Path(__file__).parent / "eval_dataset.json"
 
-    with open(path, "w") as f:
+    with Path(path).open("w", encoding="utf-8") as f:
         json.dump([q.__dict__ for q in questions], f, indent=2)
 
 

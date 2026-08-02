@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import tiktoken
+import re
 
-_ENCODING = "cl100k_base"
+from docforge.chunker.strategies.base import _get_encoder
 
 
 def apply_overlap(texts: list[str], overlap_tokens: int) -> list[str]:
@@ -23,12 +23,15 @@ def apply_overlap(texts: list[str], overlap_tokens: int) -> list[str]:
 
 
 def _extract_tail(text: str, n_tokens: int) -> str:
-    enc = tiktoken.get_encoding(_ENCODING)
-    tokens = enc.encode(text)
-    if len(tokens) <= n_tokens:
-        return text
-    tail_tokens = tokens[-n_tokens:]
-    return enc.decode(tail_tokens)
+    encoder = _get_encoder()
+    if encoder is not None:
+        tokens = encoder.encode(text)
+        if len(tokens) <= n_tokens:
+            return text
+        return encoder.decode(tokens[-n_tokens:])
+
+    words = re.findall(r"\w+|[^\w\s]", text)
+    return text if len(words) <= n_tokens else " ".join(words[-n_tokens:])
 
 
 __all__ = ["apply_overlap"]

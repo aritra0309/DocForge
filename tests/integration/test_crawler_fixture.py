@@ -6,16 +6,16 @@ from pathlib import Path
 
 import pytest
 import respx
-
-from docforge.core.config import CrawlerConfig
-from docforge.core.models import DiscoveryResult
-from docforge.crawler.cache import ResponseCache
-from docforge.crawler.engine import CrawlEngine
 from tests.fixtures.site import (
     FIXTURE_SITE_BASE as BASE,
     FIXTURE_SITE_PAGE_COUNT,
     mock_fixture_site,
 )
+
+from docforge.core.config import CrawlerConfig
+from docforge.core.models import DiscoveryResult
+from docforge.crawler.cache import ResponseCache
+from docforge.crawler.engine import CrawlEngine
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
 

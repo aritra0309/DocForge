@@ -803,13 +803,13 @@ Also provide a synchronous wrapper: all async methods callable without `await` (
 
 **Definition of done:**
 
-- [ ] `docforge index postgresql` runs end-to-end with a progress bar showing each stage
-- [ ] `docforge search "how to create an index in postgresql"` returns formatted results with source URLs
-- [ ] `docforge list` prints a Rich table
-- [ ] `docforge stats postgresql` prints accurate statistics
-- [ ] Python API works in both async and sync contexts
-- [ ] `--help` on every command produces clear, accurate documentation
-- [ ] Shell completion works: `docforge <TAB>` shows commands
+- [x] `docforge index postgresql` runs end-to-end with a progress bar showing each stage
+- [x] `docforge search "how to create an index in postgresql"` returns formatted results with source URLs
+- [x] `docforge list` prints a Rich table
+- [x] `docforge stats postgresql` prints accurate statistics
+- [x] Python API works in both async and sync contexts
+- [x] `--help` on every command produces clear, accurate documentation
+- [x] Shell completion works: `docforge <TAB>` shows commands
 
 ---
 
@@ -865,10 +865,10 @@ Build the test infrastructure that ensures correctness, catches regressions, and
 
 **Definition of done:**
 
-- [ ] `make test` runs all unit + integration tests in < 60 seconds (no network calls; all mocked)
-- [ ] Coverage ≥ 80% on all core modules
-- [ ] `make bench` runs benchmarks and outputs a summary table
-- [ ] All benchmarks meet the targets defined in the design doc (100+ pages/sec extraction, ≤50ms p50 search latency)
+- [x] `make test` runs all unit + integration tests in < 60 seconds (no network calls; all mocked)
+- [x] Coverage ≥ 80% on all core modules
+- [x] `make bench` runs benchmarks and outputs a summary table
+- [x] All benchmarks meet the targets defined in the design doc (100+ pages/sec extraction, ≤50ms p50 search latency)
 
 ---
 

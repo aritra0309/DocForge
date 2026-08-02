@@ -62,7 +62,9 @@ def print_summary_table(results: list[BenchmarkResult]) -> None:
     print(f"{'Benchmark':<40} {'Items':>10} {'Time (s)':>12} {'Items/sec':>12}")
     print("-" * 80)
     for r in results:
-        print(f"{r.name:<40} {r.items_processed:>10} {r.duration_seconds:>12.3f} {r.items_per_second:>12.2f}")
+        print(
+            f"{r.name:<40} {r.items_processed:>10} {r.duration_seconds:>12.3f} {r.items_per_second:>12.2f}"
+        )
     print("=" * 80)
 
 
@@ -93,12 +95,16 @@ def check_targets(results: list[BenchmarkResult]) -> bool:
                 # For search, we check latency (lower is better)
                 passed = r.duration_seconds <= target
                 status = "PASS" if passed else "FAIL"
-                print(f"  {r.name:<40} target: {target*1000:.0f}ms, actual: {r.duration_seconds*1000:.1f}ms [{status}]")
+                print(
+                    f"  {r.name:<40} target: {target * 1000:.0f}ms, actual: {r.duration_seconds * 1000:.1f}ms [{status}]"
+                )
             else:
                 # For throughput, higher is better
                 passed = r.items_per_second >= target
                 status = "PASS" if passed else "FAIL"
-                print(f"  {r.name:<40} target: {target:.0f}/sec, actual: {r.items_per_second:.1f}/sec [{status}]")
+                print(
+                    f"  {r.name:<40} target: {target:.0f}/sec, actual: {r.items_per_second:.1f}/sec [{status}]"
+                )
 
             if not passed:
                 all_passed = False

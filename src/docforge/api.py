@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Coroutine
+from types import TracebackType
+from typing import Any, TypeVar
 
 from docforge._version import __version__
 from docforge.core.config import DocForgeConfig, load_config
@@ -14,6 +15,8 @@ from docforge.core.pipeline import Pipeline, PipelineResult, PipelineVersionResu
 from docforge.storage.engine import StorageEngine
 from docforge.storage.metadata_store import MetadataStore
 from docforge.versioning.manager import VersionManager
+
+_ResultT = TypeVar("_ResultT")
 
 
 class DocForge:
@@ -100,7 +103,7 @@ class DocForge:
         storage = StorageEngine(self._config, software=software, version=ver)
         await storage.initialize(dimension=provider.dimension, model_name=provider.model_name)
 
-        query_vector = (await embedding_engine.embed_batch([query]))[0]
+        query_vector = (await embedding_engine.provider.embed_batch([query]))[0]
         results = await storage.search(query_vector, k=k)
 
         await storage.close()
@@ -303,7 +306,7 @@ class DocForge:
     # Sync wrapper
     # ------------------------------------------------------------------
 
-    def _run_sync(self, coro):
+    def _run_sync(self, coro: Coroutine[Any, Any, _ResultT]) -> _ResultT:
         """Run async method synchronously."""
         try:
             loop = asyncio.get_running_loop()
@@ -381,13 +384,23 @@ class DocForge:
     def __enter__(self) -> DocForge:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         self.close_sync()
 
     async def __aenter__(self) -> DocForge:
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         await self.close()
 
 

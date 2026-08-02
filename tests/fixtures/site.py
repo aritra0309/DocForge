@@ -64,7 +64,9 @@ def mock_fixture_site(
     return routes
 
 
-def fixture_sitemap_xml(*, page_count: int = FIXTURE_SITE_PAGE_COUNT, changed_page: int | None = None) -> str:
+def fixture_sitemap_xml(
+    *, page_count: int = FIXTURE_SITE_PAGE_COUNT, changed_page: int | None = None
+) -> str:
     """Build a sitemap covering the fixture site pages."""
     entries: list[str] = [
         _sitemap_entry(f"{FIXTURE_SITE_BASE}/docs/1.0", "2025-01-01"),

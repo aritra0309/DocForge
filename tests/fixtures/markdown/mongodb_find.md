@@ -14,11 +14,13 @@ db.collection.find(query, projection, options)
 
 ### Parameters
 
-\*\*query\*\*
+**query**
 : Optional. Specifies selection filter using query operators.
-\*\*projection\*\*
+
+**projection**
 : Optional. Specifies the fields to return in the documents that match the query filter.
-\*\*options\*\*
+
+**options**
 : Optional. Additional options for the query.
 
 ## Examples

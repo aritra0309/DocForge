@@ -25,7 +25,7 @@ class TestEvalMetrics:
         expected = ["a", "b", "c"]
         assert compute_recall_at_k(retrieved, expected, 5) == 1.0
         assert compute_recall_at_k(retrieved, expected, 3) == 1.0
-        assert compute_recall_at_k(retrieved, expected, 2) == 2/3
+        assert compute_recall_at_k(retrieved, expected, 2) == 2 / 3
 
     def test_compute_recall_at_k_empty_expected(self) -> None:
         retrieved = ["a", "b", "c"]
@@ -45,7 +45,7 @@ class TestEvalMetrics:
     def test_compute_mrr_third_result(self) -> None:
         retrieved = ["a", "b", "expected", "d"]
         expected = ["expected"]
-        assert compute_mrr(retrieved, expected) == 1/3
+        assert compute_mrr(retrieved, expected) == 1 / 3
 
     def test_compute_mrr_not_found(self) -> None:
         retrieved = ["a", "b", "c"]
@@ -130,7 +130,7 @@ class TestEvaluateQuestion:
         retrieved = ["chunk1", "other1", "other2", "chunk2", "other3"]
         result = evaluate_question(question, retrieved)
 
-        assert result.recall_at_5 == 2/3
+        assert result.recall_at_5 == 2 / 3
         assert result.mrr == 1.0  # First relevant at position 1
 
     def test_evaluate_question_late_match(self) -> None:
@@ -144,7 +144,7 @@ class TestEvaluateQuestion:
         result = evaluate_question(question, retrieved)
 
         assert result.recall_at_5 == 1.0
-        assert result.mrr == 1/4
+        assert result.mrr == 1 / 4
 
     def test_evaluate_question_no_match(self) -> None:
         question = EvalQuestion(

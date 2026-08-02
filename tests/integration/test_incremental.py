@@ -5,12 +5,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 import respx
-
-from docforge.core.config import DocForgeConfig
-from docforge.core.models import DiscoveryResult
-from docforge.core.pipeline import Pipeline
-from docforge.embeddings.engine import EmbeddingEngine
-from docforge.embeddings.providers.base import EmbeddingProvider
 from tests.fixtures.site import (
     FIXTURE_SITE_BASE as BASE,
     FIXTURE_SITE_PAGE_COUNT,
@@ -18,6 +12,12 @@ from tests.fixtures.site import (
     load_fixture_html,
     mock_fixture_site,
 )
+
+from docforge.core.config import DocForgeConfig
+from docforge.core.models import DiscoveryResult
+from docforge.core.pipeline import Pipeline
+from docforge.embeddings.engine import EmbeddingEngine
+from docforge.embeddings.providers.base import EmbeddingProvider
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "html"
 
