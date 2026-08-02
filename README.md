@@ -97,7 +97,7 @@ Run `docforge --help` or `docforge COMMAND --help` for all options.
 
 ## Documentation
 
-📖 **Live Documentation:** [DocForge Documentation](https://aritra0309.github.io/DocForge/)
+**Live Documentation:** [DocForge Documentation](https://aritra0309.github.io/DocForge/)
 
 ## Development
 
