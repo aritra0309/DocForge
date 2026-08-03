@@ -75,7 +75,7 @@ async def test_engine_with_sentence_transformers() -> None:
     assert len(embedded2) == 10
     for e1, e2 in zip(embedded, embedded2, strict=False):
         assert e1.vector == e2.vector
-    engine.close()
+    await engine.close()
 
 
 @pytest.mark.asyncio
@@ -86,4 +86,4 @@ async def test_engine_batches_large_corpus() -> None:
     chunks = [_chunk(f"Chunk {i}: {'hello world ' * 10}", i) for i in range(100)]
     embedded = await engine.embed(chunks)
     assert len(embedded) == 100
-    engine.close()
+    await engine.close()
